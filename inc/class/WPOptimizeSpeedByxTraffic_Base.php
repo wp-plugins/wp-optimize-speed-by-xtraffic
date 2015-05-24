@@ -78,7 +78,7 @@ class WPOptimizeSpeedByxTraffic_Base
 			
 		);
 		
-		if ( count( $submenu_pages ) ) {
+		if ( !empty( $submenu_pages ) ) {
 			foreach ( $submenu_pages as $submenu_page ) {
 				// Add submenu page
 				$admin_page = add_submenu_page( $submenu_page[0], $submenu_page[1], $submenu_page[2], $submenu_page[3], $submenu_page[4], $submenu_page[5] );
@@ -114,10 +114,13 @@ class WPOptimizeSpeedByxTraffic_Base
 			if(
 				isset($_GET['xtr-active-plugin-key']) && $_GET['xtr-active-plugin-key']
 				&& isset($_GET['xtr-active-plugin-name']) && $_GET['xtr-active-plugin-name']
+				&& isset($_GET['xtr-active-plugin-via']) && $_GET['xtr-active-plugin-via']
 			) {
-				$this->run_activate_plugin($_GET['xtr-active-plugin-key']);
-				$this->adminNoticesData['success'][] = 'Plugin "<u><b>'.$_GET['xtr-active-plugin-name'].'</b></u>" activated successfully!';
-				$pluginPathActived[] = $_GET['xtr-active-plugin-key'];
+				if($this->PLUGIN_SLUG === $_GET['xtr-active-plugin-via']) {
+					$this->run_activate_plugin($_GET['xtr-active-plugin-key']);
+					$this->adminNoticesData['success'][] = 'Plugin "<u><b>'.$_GET['xtr-active-plugin-name'].'</b></u>" activated successfully!';
+					$pluginPathActived[] = $_GET['xtr-active-plugin-key'];
+				}
 			}
 			
 			$rsOne = $this->check_required_others_plugins();
@@ -159,6 +162,7 @@ class WPOptimizeSpeedByxTraffic_Base
 									$this->adminNoticesData['error'][] = 'Plugin "<u><b>'.WPOPTIMIZESPEEDBYXTRAFFIC_PLUGIN_NAME.'</b></u>" requires the following plugin "<u><b>'.$pluginVal['name'].'</b></u>"!<br />Please <a href="'.add_query_arg(array(
 										'xtr-active-plugin-key' => rawurlencode($pluginVal['file_path_key'])
 										,'xtr-active-plugin-name' => rawurlencode($pluginVal['name'])
+										,'xtr-active-plugin-via' => rawurlencode($this->PLUGIN_SLUG)
 									), $adminUrl.'plugins.php?').'"><u><b><i>click here to activate this plugin</i></b></u></a>!';
 								}
 							}
@@ -219,8 +223,6 @@ class WPOptimizeSpeedByxTraffic_Base
 				global $wpOptimizeByxTraffic;
 				if(
 					defined('WPOPTIMIZEBYXTRAFFIC_PLUGIN_VERSION')
-					&& defined('WPOPTIMIZEBYXTRAFFIC_PLUGIN_SLUG')
-					&& class_exists('WPOptimizeByxTraffic')
 					&& isset($wpOptimizeByxTraffic) && $wpOptimizeByxTraffic
 				) {
 					
@@ -264,13 +266,15 @@ class WPOptimizeSpeedByxTraffic_Base
 	public function base_parse_display_notices($input_notices) 
 	{
 		$resultData = $this->base_parse_notices_for_display($input_notices);
-		if(count($resultData) > 0) {
-			echo implode('',$resultData);
+		
+		if(!empty($resultData)) {
+			echo implode(' ',$resultData);
 			return true;
 		}
 		
 		return false;
 	}
+	
 	
 	public function base_parse_notices_for_display($input_notices) 
 	{
@@ -283,7 +287,7 @@ class WPOptimizeSpeedByxTraffic_Base
 				$input_notices['success'] = (array)$input_notices['success'];
 				$input_notices['success'] = array_unique($input_notices['success']);
 				foreach($input_notices['success'] as $valueOne) {
-					$resultData[] = '<div style="display:block;"><div class="updated fade wpoptxtr_success" style="padding: 1% 2%;"><b>'.WPOPTIMIZESPEEDBYXTRAFFIC_PLUGIN_NAME.'</b> : '.$valueOne.'</div></div>';
+					$resultData[] = '<div style="display:block;"><div class="updated fade wpoptxtr_success" style="padding: 1% 2%;background-color:none;"><b>'.WPOPTIMIZESPEEDBYXTRAFFIC_PLUGIN_NAME.'</b> : '.$valueOne.'</div></div>';
 				}
 			}
 		}
@@ -293,10 +297,22 @@ class WPOptimizeSpeedByxTraffic_Base
 				$input_notices['error'] = (array)$input_notices['error'];
 				$input_notices['error'] = array_unique($input_notices['error']);
 				foreach($input_notices['error'] as $valueOne) {
-					$resultData[] = '<div style="display:block;"><div class="update-nag fade wpoptxtr_error" style="padding: 1% 2%;"><b>'.WPOPTIMIZESPEEDBYXTRAFFIC_PLUGIN_NAME.'</b> : '.$valueOne.'</div></div>';
+					$resultData[] = '<div style="display:block;"><div class="update-nag fade wpoptxtr_error" style="padding: 1% 2%;background-color:none;"><b>'.WPOPTIMIZESPEEDBYXTRAFFIC_PLUGIN_NAME.'</b> : '.$valueOne.'</div></div>';
 				}
 			}
 		}
+		
+		
+		if(isset($input_notices['warning'])) {
+			if($input_notices['warning']) {
+				$input_notices['warning'] = (array)$input_notices['warning'];
+				$input_notices['warning'] = array_unique($input_notices['warning']);
+				foreach($input_notices['warning'] as $valueOne) {
+					$resultData[] = '<div style="display:block;"><div class="update-nag fade" style="padding: 1% 2%;background-color:none;"><b>'.WPOPTIMIZESPEEDBYXTRAFFIC_PLUGIN_NAME.'</b> : '.$valueOne.'</div></div>';
+				}
+			}
+		}
+		
 		
 		$resultData = array_unique($resultData);
 		
@@ -371,9 +387,7 @@ class WPOptimizeSpeedByxTraffic_Base
 		global $wpOptimizeByxTraffic;
 		
 		if(isset($wpOptimizeByxTraffic) && $wpOptimizeByxTraffic) {
-			$this->base_clear_files_config_content();
-			$this->base_activate_optimize_speed();
-			$wpOptimizeByxTraffic->base_clear_data(',all,');
+			$this->set_server_config_for_optimize_speed();
 		}
 	}
 	
@@ -402,6 +416,8 @@ class WPOptimizeSpeedByxTraffic_Base
 		global $wpOptimizeByxTraffic;
 		
 		if(isset($wpOptimizeByxTraffic) && $wpOptimizeByxTraffic) {
+			$wpOptimizeByxTraffic->base_clear_files_config_content();
+			
 			$rsOne = $wpOptimizeByxTraffic->base_get_all_files_config_content_available();
 			foreach($rsOne as $key1 => $value1) {
 				if($value1) {
@@ -462,7 +478,9 @@ class WPOptimizeSpeedByxTraffic_Base
 				
 				if(false !== $htaccessContent) {
 					
-					$htaccessContent = trim($htaccessContent); 
+					$htaccessContent = trim($htaccessContent);
+					
+					$myHtaccessConfig_RewriteRule_Patterns1 = '^(.*)';
 					
 					$myHtaccessConfig_RewriteBase_PlusToCache = '';
 					$myHtaccessConfig_RewriteRule_PlusToCache = '';
@@ -479,217 +497,201 @@ class WPOptimizeSpeedByxTraffic_Base
 					}
 					
 					$myHtaccessConfig_ForNotCacheMobile = 
-	PHP_EOL . 'RewriteCond %{HTTP:X-Wap-Profile} !^[a-z0-9\"]+ [NC]'
-	. PHP_EOL . 'RewriteCond %{HTTP:Profile} !^[a-z0-9\"]+ [NC]'
-	. PHP_EOL . 'RewriteCond %{HTTP_USER_AGENT} !^.*(2.0\ MMP|240x320|400X240|AvantGo|BlackBerry|Blazer|Cellphone|Danger|DoCoMo|Elaine/3.0|EudoraWeb|Googlebot-Mobile|hiptop|IEMobile|KYOCERA/WX310K|LG/U990|MIDP-2.|MMEF20|MOT-V|NetFront|Newt|Nintendo\ Wii|Nitro|Nokia|Opera\ Mini|Palm|PlayStation\ Portable|portalmmm|Proxinet|ProxiNet|SHARP-TQ-GX10|SHG-i900|Small|SonyEricsson|Symbian\ OS|SymbianOS|TS21i-10|UP.Browser|UP.Link|webOS|Windows\ CE|WinWAP|YahooSeeker/M1A1-R2D2|iPhone|iPod|Android|BlackBerry9530|LG-TU915\ Obigo|LGE\ VX|webOS|Nokia5800).* [NC]'
-	. PHP_EOL . 'RewriteCond %{HTTP_user_agent} !^(w3c\ |w3c-|acs-|alav|alca|amoi|audi|avan|benq|bird|blac|blaz|brew|cell|cldc|cmd-|dang|doco|eric|hipt|htc_|inno|ipaq|ipod|jigs|kddi|keji|leno|lg-c|lg-d|lg-g|lge-|lg/u|maui|maxo|midp|mits|mmef|mobi|mot-|moto|mwbp|nec-|newt|noki|palm|pana|pant|phil|play|port|prox|qwap|sage|sams|sany|sch-|sec-|send|seri|sgh-|shar|sie-|siem|smal|smar|sony|sph-|symb|t-mo|teli|tim-|tosh|tsm-|upg1|upsi|vk-v|voda|wap-|wapa|wapi|wapp|wapr|webc|winw|winw|xda\ |xda-).* [NC]'
-	. PHP_EOL . 'RewriteCond %{HTTP_USER_AGENT} !(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge\ |maemo|midp|mmp|mobile.+firefox|netfront|opera\ m(ob|in)i|palm(\ os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows\ ce|xda|xiino [NC,OR]'
-	. PHP_EOL . 'RewriteCond %{HTTP_USER_AGENT} !^(1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a\ wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r\ |s\ )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1\ u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp(\ i|ip)|hs\-c|ht(c(\-|\ |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac(\ |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt(\ |\/)|klon|kpt\ |kwc\-|kyo(c|k)|le(no|xi)|lg(\ g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-|\ |o|v)|zz)|mt(50|p1|v\ )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v\ )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-|\ )|webc|whit|wi(g\ |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-) [NC]';
-					
+PHP_EOL . 'RewriteCond %{HTTP:X-Wap-Profile} !^[a-z0-9\"]+ [NC]'
+. PHP_EOL . 'RewriteCond %{HTTP:Profile} !^[a-z0-9\"]+ [NC]'
+. PHP_EOL . 'RewriteCond %{HTTP_USER_AGENT} !^.*(2.0\ MMP|240x320|400X240|AvantGo|BlackBerry|Blazer|Cellphone|Danger|DoCoMo|Elaine/3.0|EudoraWeb|Googlebot-Mobile|hiptop|IEMobile|KYOCERA/WX310K|LG/U990|MIDP-2.|MMEF20|MOT-V|NetFront|Newt|Nintendo\ Wii|Nitro|Nokia|Opera\ Mini|Palm|PlayStation\ Portable|portalmmm|Proxinet|ProxiNet|SHARP-TQ-GX10|SHG-i900|Small|SonyEricsson|Symbian\ OS|SymbianOS|TS21i-10|UP.Browser|UP.Link|webOS|Windows\ CE|WinWAP|YahooSeeker/M1A1-R2D2|iPhone|iPod|Android|BlackBerry9530|LG-TU915\ Obigo|LGE\ VX|webOS|Nokia5800).* [NC]'
+. PHP_EOL . 'RewriteCond %{HTTP_user_agent} !^(w3c\ |w3c-|acs-|alav|alca|amoi|audi|avan|benq|bird|blac|blaz|brew|cell|cldc|cmd-|dang|doco|eric|hipt|htc_|inno|ipaq|ipod|jigs|kddi|keji|leno|lg-c|lg-d|lg-g|lge-|lg/u|maui|maxo|midp|mits|mmef|mobi|mot-|moto|mwbp|nec-|newt|noki|palm|pana|pant|phil|play|port|prox|qwap|sage|sams|sany|sch-|sec-|send|seri|sgh-|shar|sie-|siem|smal|smar|sony|sph-|symb|t-mo|teli|tim-|tosh|tsm-|upg1|upsi|vk-v|voda|wap-|wapa|wapi|wapp|wapr|webc|winw|winw|xda\ |xda-).* [NC]'
+. PHP_EOL . 'RewriteCond %{HTTP_USER_AGENT} !(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge\ |maemo|midp|mmp|mobile.+firefox|netfront|opera\ m(ob|in)i|palm(\ os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows\ ce|xda|xiino [NC,OR]'
+. PHP_EOL . 'RewriteCond %{HTTP_USER_AGENT} !^(1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a\ wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r\ |s\ )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1\ u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp(\ i|ip)|hs\-c|ht(c(\-|\ |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac(\ |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt(\ |\/)|klon|kpt\ |kwc\-|kyo(c|k)|le(no|xi)|lg(\ g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-|\ |o|v)|zz)|mt(50|p1|v\ )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v\ )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-|\ )|webc|whit|wi(g\ |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-) [NC]'.PHP_EOL;
+
 					if(isset($options['optimize_cache_mobile_device_cache_enable']) && $options['optimize_cache_mobile_device_cache_enable']) {
 						$myHtaccessConfig_ForNotCacheMobile = '';
 					}
 					
-					$myHtaccessConfig_AutoResizeImagesFitScreenWidth1 = '';
-					$myHtaccessConfig_AutoResizeImagesFitScreenWidth2 = '';
-					if(isset($wpOptimizeByxTraffic_options['optimize_images_auto_resize_images_fit_screen_width_enable']) && $wpOptimizeByxTraffic_options['optimize_images_auto_resize_images_fit_screen_width_enable']) {
-						$myHtaccessConfig_AutoResizeImagesFitScreenWidth1 = PHP_EOL.'RewriteCond %{HTTP_COOKIE} xtrdvscwd=([^;]+) [NC]';
-						$myHtaccessConfig_AutoResizeImagesFitScreenWidth2 = 'sw_%3';
+					
+					
+					
+					$myHtaccessConfig_RewriteCond_QUERY_STRING = PHP_EOL . 'RewriteCond %{QUERY_STRING} !.*=.*';
+					
+					if(isset($options['optimize_cache_url_get_query_cache_enable']) && $options['optimize_cache_url_get_query_cache_enable']) {
+						$myHtaccessConfig_RewriteRule_Patterns1 = '^([^?]*)';
+						$myHtaccessConfig_RewriteCond_QUERY_STRING = '';
+					}
+					
+					
+					
+					
+					
+					
+					
+					
+					$myHtaccessConfig_RewriteCond_RewriteRule_AutoResizeImagesFitWidth = '';
+					
+					if(isset($wpOptimizeByxTraffic_options['optimize_images_auto_resize_images_enable']) && $wpOptimizeByxTraffic_options['optimize_images_auto_resize_images_enable']) {
+						
+						$myHtaccessConfig_RewriteCond_RewriteRule_AutoResizeImagesFitWidth = 
+PHP_EOL . '#http for auto resize image#
+RewriteCond %{REQUEST_URI} !^.*//.*$
+RewriteCond %{REQUEST_URI} !^.*(wp-includes|wp-content|wp-admin|\.php).*$
+RewriteCond %{REQUEST_METHOD} GET'.$myHtaccessConfig_RewriteCond_QUERY_STRING.'
+RewriteCond %{HTTP:Cookie} !^.*(comment_author_|wordpress_logged_in|wp-postpass_).*$'.$myHtaccessConfig_ForNotCacheMobile.'
+RewriteCond %{HTTPS} !on
+RewriteCond %{HTTP_COOKIE} xtrdvscwd=([^;]+) [NC]
+RewriteCond %{DOCUMENT_ROOT}'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index-sw_%1.html -f
+RewriteRule '.$myHtaccessConfig_RewriteRule_Patterns1.' "'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index-sw_%1.html" [L]
+
+#https for auto resize image#
+RewriteCond %{REQUEST_URI} !^.*//.*$
+RewriteCond %{REQUEST_URI} !^.*(wp-includes|wp-content|wp-admin|\.php).*$
+RewriteCond %{REQUEST_METHOD} GET'.$myHtaccessConfig_RewriteCond_QUERY_STRING.'
+RewriteCond %{HTTP:Cookie} !^.*(comment_author_|wordpress_logged_in|wp-postpass_).*$'.$myHtaccessConfig_ForNotCacheMobile.'
+RewriteCond %{HTTPS} on
+RewriteCond %{HTTP_COOKIE} xtrdvscwd=([^;]+) [NC]
+RewriteCond %{DOCUMENT_ROOT}'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index-sw_%1.html -f
+RewriteRule '.$myHtaccessConfig_RewriteRule_Patterns1.' "'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index-sw_%1.html" [L]
+' . PHP_EOL;
 					}
 					
 					
 					$myHtaccessConfig = 
-	'
+'
 
-	### BEGIN '.$this->KEY_CONFIG_CONTENT.' ###
+### BEGIN '.$this->KEY_CONFIG_CONTENT.' ###
 
-	<IfModule pagespeed_module>
+<IfModule pagespeed_module>
 	ModPagespeed on
+</IfModule>
+
+<ifModule mod_deflate.c>
+	AddOutputFilterByType DEFLATE '.implode(' ',$mimeTypesEnableGzip).'
+	<IfModule mod_headers.c>
+		Header append Vary User-Agent env=!dont-vary
 	</IfModule>
-
-	<ifModule mod_deflate.c>
-		AddOutputFilterByType DEFLATE '.implode(' ',$mimeTypesEnableGzip).'
-		<IfModule mod_headers.c>
-			Header append Vary User-Agent env=!dont-vary
-		</IfModule>
-		<IfModule mod_mime.c>
-			AddOutputFilter DEFLATE js css htm html xml
-		</IfModule>
-	</ifModule>
-
-
-	<ifModule mod_expires.c>
-	ExpiresActive On
-	ExpiresDefault "access plus 10 seconds"
-	ExpiresByType text/cache-manifest "access plus 0 seconds"
-
-	# Data
-	ExpiresByType text/xml "access plus 0 seconds"
-	ExpiresByType application/xml "access plus 0 seconds"
-	ExpiresByType application/json "access plus 0 seconds"
-
-	# Feed
-	ExpiresByType application/rss+xml "access plus 3600 seconds"
-	ExpiresByType application/atom+xml "access plus 3600 seconds"
-
-	# Favicon
-	ExpiresByType image/x-icon "access plus 31536000 seconds"
-
-	# Media: images, video, audio
-	ExpiresByType image/gif "access plus 31536000 seconds"
-	ExpiresByType image/png "access plus 31536000 seconds"
-	ExpiresByType image/jpeg "access plus 31536000 seconds"
-	ExpiresByType image/jpg "access plus 31536000 seconds"
-	ExpiresByType video/ogg "access plus 31536000 seconds"
-	ExpiresByType audio/ogg "access plus 31536000 seconds"
-	ExpiresByType video/mp4 "access plus 31536000 seconds"
-	ExpiresByType video/webm "access plus 31536000 seconds"
-
-	# HTC files  (css3pie)
-	ExpiresByType text/x-component "access plus 31536000 seconds"
-
-	# Webfonts
-	ExpiresByType application/x-font-ttf "access plus 31536000 seconds"
-	ExpiresByType font/opentype "access plus 31536000 seconds"
-	ExpiresByType font/woff2 "access plus 31536000 seconds"
-	ExpiresByType application/x-font-woff "access plus 31536000 seconds"
-	ExpiresByType image/svg+xml "access plus 31536000 seconds"
-	ExpiresByType application/vnd.ms-fontobject "access plus 31536000 seconds"
-
-	# CSS and JavaScript
-	ExpiresByType text/css "access plus 31536000 seconds"
-	ExpiresByType application/javascript "access plus 31536000 seconds"
-	ExpiresByType text/javascript "access plus 31536000 seconds"
-	ExpiresByType application/javascript "access plus 31536000 seconds"
-	ExpiresByType application/x-javascript "access plus 31536000 seconds"
-
-	# Others files
-	ExpiresByType application/x-shockwave-flash "access plus 31536000 seconds"
-	ExpiresByType application/octet-stream "access plus 31536000 seconds"
-	</ifModule>
-
-
-	<ifModule mod_headers.c>
-		<filesMatch "\.(ico|jpe?g|png|gif|swf)$">
-			Header set Cache-Control "public, max-age=31536000"
-			Header set Pragma "public"
-		</filesMatch>
-		<filesMatch "\.(css)$">
-			Header set Cache-Control "public, max-age=31536000"
-			Header set Pragma "public"
-		</filesMatch>
-		<filesMatch "\.(js)$">
-			Header set Cache-Control "public, max-age=31536000"
-			Header set Pragma "public"
-		</filesMatch>
-		
-		Header set X-Powered-By "'.$pluginNameVersion.'"
-		Header set Server "'.$pluginNameVersion.'"
-	</ifModule>
-
-
-	<IfModule mod_rewrite.c>
-	RewriteEngine On
-	RewriteBase /'.$myHtaccessConfig_RewriteBase_PlusToCache.'
-	AddDefaultCharset UTF-8
-	
-	#http + gzip#
-	RewriteCond %{REQUEST_URI} !^.*[^/]$
-	RewriteCond %{REQUEST_URI} !^.*//.*$
-	RewriteCond %{REQUEST_URI} !^.*(wp-includes|wp-content|wp-admin|\.php).*$
-	RewriteCond %{REQUEST_METHOD} !POST
-	RewriteCond %{QUERY_STRING} !.*=.*
-	RewriteCond %{HTTP:Cookie} !^.*(comment_author_|wordpress_logged_in|wp-postpass_).*$'.$myHtaccessConfig_ForNotCacheMobile.''.$myHtaccessConfig_AutoResizeImagesFitScreenWidth1.'
-	RewriteCond %{HTTP:Accept-Encoding} gzip
-	RewriteCond %{HTTPS} !on
-	RewriteCond %{DOCUMENT_ROOT}'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index.html.gz -f
-	RewriteRule ^(.*) "'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index.html.gz" [L]
-
-	#http#
-	RewriteCond %{REQUEST_URI} !^.*[^/]$
-	RewriteCond %{REQUEST_URI} !^.*//.*$
-	RewriteCond %{REQUEST_URI} !^.*(wp-includes|wp-content|wp-admin|\.php).*$
-	RewriteCond %{REQUEST_METHOD} !POST
-	RewriteCond %{QUERY_STRING} !.*=.*
-	RewriteCond %{HTTP:Cookie} !^.*(comment_author_|wordpress_logged_in|wp-postpass_).*$'.$myHtaccessConfig_ForNotCacheMobile.'
-	RewriteCond %{HTTPS} !on
-	RewriteCond %{DOCUMENT_ROOT}'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index.html -f
-	RewriteRule ^(.*) "'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index.html" [L]
-
-	#https + gzip#
-	RewriteCond %{REQUEST_URI} !^.*[^/]$
-	RewriteCond %{REQUEST_URI} !^.*//.*$
-	RewriteCond %{REQUEST_URI} !^.*(wp-includes|wp-content|wp-admin|\.php).*$
-	RewriteCond %{REQUEST_METHOD} !POST
-	RewriteCond %{QUERY_STRING} !.*=.*
-	RewriteCond %{HTTP:Cookie} !^.*(comment_author_|wordpress_logged_in|wp-postpass_).*$'.$myHtaccessConfig_ForNotCacheMobile.'
-	RewriteCond %{HTTP:Accept-Encoding} gzip
-	RewriteCond %{HTTPS} on
-	RewriteCond %{DOCUMENT_ROOT}'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index-https.html.gz -f
-	RewriteRule ^(.*) "'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index-https.html.gz" [L]
-
-	#https#
-	RewriteCond %{REQUEST_URI} !^.*[^/]$
-	RewriteCond %{REQUEST_URI} !^.*//.*$
-	RewriteCond %{REQUEST_URI} !^.*(wp-includes|wp-content|wp-admin|\.php).*$
-	RewriteCond %{REQUEST_METHOD} !POST
-	RewriteCond %{QUERY_STRING} !.*=.*
-	RewriteCond %{HTTP:Cookie} !^.*(comment_author_|wordpress_logged_in|wp-postpass_).*$'.$myHtaccessConfig_ForNotCacheMobile.'
-	RewriteCond %{HTTPS} on
-	RewriteCond %{DOCUMENT_ROOT}'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index-https.html -f
-	RewriteRule ^(.*) "'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index-https.html" [L]
-
-	#XML
-	
-	#http + gzip#
-	RewriteCond %{REQUEST_URI} !^.*[^/]$
-	RewriteCond %{REQUEST_URI} !^.*//.*$
-	RewriteCond %{REQUEST_URI} !^.*(wp-includes|wp-content|wp-admin|\.php).*$
-	RewriteCond %{REQUEST_METHOD} !POST
-	RewriteCond %{QUERY_STRING} !.*=.*
-	RewriteCond %{HTTP:Cookie} !^.*(comment_author_|wordpress_logged_in|wp-postpass_).*$'.$myHtaccessConfig_ForNotCacheMobile.'
-	RewriteCond %{HTTP:Accept-Encoding} gzip
-	RewriteCond %{HTTPS} !on
-	RewriteCond %{DOCUMENT_ROOT}'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index.xml.gz -f
-	RewriteRule ^(.*) "'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index.xml.gz" [L]
-
-	#http#
-	RewriteCond %{REQUEST_URI} !^.*[^/]$
-	RewriteCond %{REQUEST_URI} !^.*//.*$
-	RewriteCond %{REQUEST_URI} !^.*(wp-includes|wp-content|wp-admin|\.php).*$
-	RewriteCond %{REQUEST_METHOD} !POST
-	RewriteCond %{QUERY_STRING} !.*=.*
-	RewriteCond %{HTTP:Cookie} !^.*(comment_author_|wordpress_logged_in|wp-postpass_).*$'.$myHtaccessConfig_ForNotCacheMobile.'
-	RewriteCond %{HTTPS} !on
-	RewriteCond %{DOCUMENT_ROOT}'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index.xml -f
-	RewriteRule ^(.*) "'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index.xml" [L]
-
-	#https + gzip#
-	RewriteCond %{REQUEST_URI} !^.*[^/]$
-	RewriteCond %{REQUEST_URI} !^.*//.*$
-	RewriteCond %{REQUEST_URI} !^.*(wp-includes|wp-content|wp-admin|\.php).*$
-	RewriteCond %{REQUEST_METHOD} !POST
-	RewriteCond %{QUERY_STRING} !.*=.*
-	RewriteCond %{HTTP:Cookie} !^.*(comment_author_|wordpress_logged_in|wp-postpass_).*$'.$myHtaccessConfig_ForNotCacheMobile.'
-	RewriteCond %{HTTP:Accept-Encoding} gzip
-	RewriteCond %{HTTPS} on
-	RewriteCond %{DOCUMENT_ROOT}'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index-https.xml.gz -f
-	RewriteRule ^(.*) "'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index-https.xml.gz" [L]
-
-	#https#
-	RewriteCond %{REQUEST_URI} !^.*[^/]$
-	RewriteCond %{REQUEST_URI} !^.*//.*$
-	RewriteCond %{REQUEST_URI} !^.*(wp-includes|wp-content|wp-admin|\.php).*$
-	RewriteCond %{REQUEST_METHOD} !POST
-	RewriteCond %{QUERY_STRING} !.*=.*
-	RewriteCond %{HTTP:Cookie} !^.*(comment_author_|wordpress_logged_in|wp-postpass_).*$'.$myHtaccessConfig_ForNotCacheMobile.'
-	RewriteCond %{HTTPS} on
-	RewriteCond %{DOCUMENT_ROOT}'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index-https.xml -f
-	RewriteRule ^(.*) "'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index-https.xml" [L]
-
+	<IfModule mod_mime.c>
+		AddOutputFilter DEFLATE js css htm html xml
 	</IfModule>
+</ifModule>
 
-	### END '.$this->KEY_CONFIG_CONTENT.' ###
+<ifModule mod_expires.c>
+ExpiresActive On
+ExpiresDefault "access plus 10 seconds"
+ExpiresByType text/cache-manifest "access plus 0 seconds"
+
+# Data
+ExpiresByType text/xml "access plus 0 seconds"
+ExpiresByType application/xml "access plus 0 seconds"
+ExpiresByType application/json "access plus 0 seconds"
+
+# Feed
+ExpiresByType application/rss+xml "access plus 3600 seconds"
+ExpiresByType application/atom+xml "access plus 3600 seconds"
+
+# Favicon
+ExpiresByType image/x-icon "access plus 31536000 seconds"
+
+# Media: images, video, audio
+ExpiresByType image/gif "access plus 31536000 seconds"
+ExpiresByType image/png "access plus 31536000 seconds"
+ExpiresByType image/jpeg "access plus 31536000 seconds"
+ExpiresByType image/jpg "access plus 31536000 seconds"
+ExpiresByType video/ogg "access plus 31536000 seconds"
+ExpiresByType audio/ogg "access plus 31536000 seconds"
+ExpiresByType video/mp4 "access plus 31536000 seconds"
+ExpiresByType video/webm "access plus 31536000 seconds"
+
+# HTC files  (css3pie)
+ExpiresByType text/x-component "access plus 31536000 seconds"
+
+# Webfonts
+ExpiresByType application/x-font-ttf "access plus 31536000 seconds"
+ExpiresByType font/opentype "access plus 31536000 seconds"
+ExpiresByType font/woff2 "access plus 31536000 seconds"
+ExpiresByType application/x-font-woff "access plus 31536000 seconds"
+ExpiresByType image/svg+xml "access plus 31536000 seconds"
+ExpiresByType application/vnd.ms-fontobject "access plus 31536000 seconds"
+
+# CSS and JavaScript
+ExpiresByType text/css "access plus 31536000 seconds"
+ExpiresByType application/javascript "access plus 31536000 seconds"
+ExpiresByType text/javascript "access plus 31536000 seconds"
+ExpiresByType application/javascript "access plus 31536000 seconds"
+ExpiresByType application/x-javascript "access plus 31536000 seconds"
+
+# Others files
+ExpiresByType application/x-shockwave-flash "access plus 31536000 seconds"
+ExpiresByType application/octet-stream "access plus 31536000 seconds"
+</ifModule>
+
+
+<ifModule mod_headers.c>
+	<filesMatch "\.(ico|jpe?g|png|gif|swf)$">
+		Header set Cache-Control "public, max-age=31536000"
+		Header set Pragma "public"
+	</filesMatch>
+	<filesMatch "\.(css)$">
+		Header set Cache-Control "public, max-age=31536000"
+		Header set Pragma "public"
+	</filesMatch>
+	<filesMatch "\.(js)$">
+		Header set Cache-Control "public, max-age=31536000"
+		Header set Pragma "public"
+	</filesMatch>
+	
+	Header set X-Powered-By "'.$pluginNameVersion.'"
+	Header set Server "'.$pluginNameVersion.'"
+</ifModule>
+
+
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteBase /'.$myHtaccessConfig_RewriteBase_PlusToCache.'
+AddDefaultCharset UTF-8
+
+###### HTML ######
+
+'.$myHtaccessConfig_RewriteCond_RewriteRule_AutoResizeImagesFitWidth.'
+
+#http#
+RewriteCond %{REQUEST_URI} !^.*(wp-includes|wp-content|wp-admin|\.php).*$
+RewriteCond %{REQUEST_METHOD} GET'.$myHtaccessConfig_RewriteCond_QUERY_STRING.'
+RewriteCond %{HTTP:Cookie} !^.*(comment_author_|wordpress_logged_in|wp-postpass_).*$'.$myHtaccessConfig_ForNotCacheMobile.'
+RewriteCond %{HTTPS} !on
+RewriteCond %{DOCUMENT_ROOT}'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index-sw_.html -f
+RewriteRule '.$myHtaccessConfig_RewriteRule_Patterns1.' "'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index-sw_.html" [L]
+
+#https#
+RewriteCond %{REQUEST_URI} !^.*(wp-includes|wp-content|wp-admin|\.php).*$
+RewriteCond %{REQUEST_METHOD} GET'.$myHtaccessConfig_RewriteCond_QUERY_STRING.'
+RewriteCond %{HTTP:Cookie} !^.*(comment_author_|wordpress_logged_in|wp-postpass_).*$'.$myHtaccessConfig_ForNotCacheMobile.'
+RewriteCond %{HTTPS} on
+RewriteCond %{DOCUMENT_ROOT}'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index-https-sw_.html -f
+RewriteRule '.$myHtaccessConfig_RewriteRule_Patterns1.' "'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index-https-sw_.html" [L]
+
+###### XML ######
+
+#http#
+RewriteCond %{REQUEST_URI} !^.*//.*$
+RewriteCond %{REQUEST_URI} !^.*(wp-includes|wp-content|wp-admin|\.php).*$
+RewriteCond %{REQUEST_METHOD} GET
+RewriteCond %{QUERY_STRING} !.*=.*
+RewriteCond %{HTTP:Cookie} !^.*(comment_author_|wordpress_logged_in|wp-postpass_).*$'.$myHtaccessConfig_ForNotCacheMobile.'
+RewriteCond %{HTTPS} !on
+RewriteCond %{DOCUMENT_ROOT}'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index.xml -f
+RewriteRule ^(.*) "'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index.xml" [L]
+
+#https#
+RewriteCond %{REQUEST_URI} !^.*//.*$
+RewriteCond %{REQUEST_URI} !^.*(wp-includes|wp-content|wp-admin|\.php).*$
+RewriteCond %{REQUEST_METHOD} GET
+RewriteCond %{QUERY_STRING} !.*=.*
+RewriteCond %{HTTP:Cookie} !^.*(comment_author_|wordpress_logged_in|wp-postpass_).*$'.$myHtaccessConfig_ForNotCacheMobile.'
+RewriteCond %{HTTP:Accept-Encoding} gzip
+RewriteCond %{HTTPS} on
+RewriteCond %{DOCUMENT_ROOT}'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index-https.xml -f
+RewriteRule ^(.*) "'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index-https.xml" [L]
+</IfModule>
+
+### END '.$this->KEY_CONFIG_CONTENT.' ###
 
 	';
 
@@ -831,13 +833,26 @@ class WPOptimizeSpeedByxTraffic_Base
 						$myConfigContent_ForNotCacheMobile = '';
 					}
 					
-					
-					$myConfigContent_AutoResizeImagesFitScreenWidth1 = '-sw_';
-					if(isset($wpOptimizeByxTraffic_options['optimize_images_auto_resize_images_fit_screen_width_enable']) && $wpOptimizeByxTraffic_options['optimize_images_auto_resize_images_fit_screen_width_enable']) {
-						$myConfigContent_AutoResizeImagesFitScreenWidth1 = '-sw_$cookie_xtrdvscwd'; 
+					$myConfigContent_ForNotCacheQuery = '
+
+	if ($query_string != "") {
+		set $cache_uri \'null cache\'; 
+	}
+
+';
+					if(isset($options['optimize_cache_url_get_query_cache_enable']) && $options['optimize_cache_url_get_query_cache_enable']) {
+						$myConfigContent_ForNotCacheQuery = '';
 					}
 					
 					
+					
+	
+
+					
+					$myConfigContent_AutoResizeImagesFitScreenWidth1 = '-sw_';
+					if(isset($wpOptimizeByxTraffic_options['optimize_images_auto_resize_images_enable']) && $wpOptimizeByxTraffic_options['optimize_images_auto_resize_images_enable']) {
+						$myConfigContent_AutoResizeImagesFitScreenWidth1 = '-sw_$cookie_xtrdvscwd'; 
+					}
 					
 					$myConfigContent = 
 	'
@@ -927,46 +942,27 @@ class WPOptimizeSpeedByxTraffic_Base
 	#    add_header Pragma "public";
 	#    add_header Cache-Control "max-age=15, public";
 	#}
-
-
-
-
+	
 	# '.WPOPTIMIZEBYXTRAFFIC_PLUGIN_NAME.' rules.
 
-	set $cache_uri $request_uri;
+	set $cache_uri $uri;
 	set $https_plus \'\';
 
-	# POST requests and urls with a query string should always go to PHP
-
-	if ($request_method = POST) {
+	# not GET requests and urls with a query string should always go to PHP
+	if ($request_method !~ ^(GET)$) {
 		set $cache_uri \'null cache\';
 	}
-
-	if ($request_method = PUT) {
-		set $cache_uri \'null cache\';
-	}
-
-	if ($request_method = UPDATE) {
-		set $cache_uri \'null cache\';
-	}
-
-
-	if ($request_method = DELETE) {
-		set $cache_uri \'null cache\';
-	}
-
-	if ($query_string != "") {
-		set $cache_uri \'null cache\'; 
-	}   
-
+	
+	'.$myConfigContent_ForNotCacheQuery.'
+	
 	# Don\'t cache uris containing the following segments
-	if ($request_uri ~* "(/wp-admin/|/wp-content/|/wp-includes/|/xmlrpc.php|/wp-(app|cron|login|register|mail).php|wp-.*.php|index.php|wp-comments-popup.php|wp-links-opml.php|wp-locations.php)") {
+	if ($request_uri ~* "(/wp-admin/|/wp-content/|/wp-includes/|.*.php)") {
 		set $cache_uri \'null cache\';
-	}   
+	}
 
 	# Don\'t use the cache for logged in users or recent commenters
 
-	if ($http_cookie ~* "comment_author|wordpress_[a-f0-9]+|wp-postpass|wordpress_logged_in") {
+	if ($http_cookie ~* "comment_author|wordpress_[a-f0-9]+|wp-postpass|wordpress_logged_in|wptouch_switch_toggle") {
 		set $cache_uri \'null cache\';
 	}
 
@@ -978,12 +974,14 @@ class WPOptimizeSpeedByxTraffic_Base
 
 	if ($scheme = "https") {
 		set $https_plus \'-https\';
-	}  
+	}
 	
 	location / {
+		root '.$pathRootWP.'; 
 		index index.php index.html index.htm default.html default.htm;
 		try_files '.
 		'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/$host/$cache_uri/index$https_plus'.$myConfigContent_AutoResizeImagesFitScreenWidth1.'.html '.
+		'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/$host/$cache_uri/index$https_plus-sw_.html '.
 		'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/$host/$cache_uri/index$https_plus.xml '.
 		'$uri $uri/ /index.php?$args;
 	}
@@ -1056,6 +1054,26 @@ if(file_exists(\''.$pathFile2.'\') && is_file(\''.$pathFile2.'\')) {
 		}
 		
 	}
+	
+	
+	public function set_server_config_for_optimize_speed()
+	{
+		
+		global $wpOptimizeByxTraffic;
+		
+		if(isset($wpOptimizeByxTraffic) && $wpOptimizeByxTraffic) {
+			$this->base_clear_files_config_content();
+			$this->base_activate_optimize_speed();
+			$wpOptimizeByxTraffic->base_clear_data(',all,');
+			
+			if('nginx' === PepVN_Data::$defaultParams['serverSoftware']) {
+				$wpOptimizeByxTraffic->add_admin_notice_session('warning', 'You need to restart Nginx via the command ssh "service nginx restart" for the new setting to take effect!');
+			}
+		}
+		
+		
+	}
+	
 	
 	public function set_cache_options()
 	{

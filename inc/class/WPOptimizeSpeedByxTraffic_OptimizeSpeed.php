@@ -13,7 +13,10 @@ class WPOptimizeSpeedByxTraffic_OptimizeSpeed extends WPOptimizeSpeedByxTraffic_
 	private $loadJsTimeDelay = 1000;//miliseconds
 	private $loadCssTimeDelay = 10;//miliseconds
 	
-	private $numberLoadCssAsync = 0; 
+	private $numberLoadCssAsync = 0;
+	
+	private $patternsIgnoredJavascript_Uri = '#(adsbygoogle)#is'; 
+	private $patternsIgnoredJavascript_Code = '#(document\.write|_ase\.push)#is';
 	
 	public $cdn_patternFilesTypeAllow = '';
 	
@@ -424,6 +427,7 @@ class WPOptimizeSpeedByxTraffic_OptimizeSpeed extends WPOptimizeSpeedByxTraffic_
 		return $resultData;
 	}
 	
+	
 	public function parse_load_html_scripts_by_tag($input_parameters) 
 	{
 		$resultData = '';
@@ -522,13 +526,13 @@ setTimeout(function() {
 		$checkStatus1 = true;
 		
 		if($checkStatus1) {
-			if ( is_feed() ) {
+			if ( PepVN_Data::wp_is_feed() ) {
 				$checkStatus1 = false;
 			}
 		}
 		
 		if($checkStatus1) {
-			if ( is_admin() ) {
+			if ( PepVN_Data::wp_is_admin() ) {
 				$checkStatus1 = false;
 			}
 		}
@@ -544,12 +548,9 @@ setTimeout(function() {
 			return $text;
 		}
 		
-		
-		
 		$options = $this->get_options(array(
 			'cache_status' => 1
 		));
-		
 		
 		//Check can process
 		
@@ -602,14 +603,13 @@ setTimeout(function() {
 			,'options' => $options
 		));
 		
-		$valueTemp = PepVN_Data::$cacheObject->get_cache($keyCacheProcessMain);
+		$valueTemp = PepVN_Data::$cachePermanentObject->get_cache($keyCacheProcessMain);
 		
 		if(null !== $valueTemp) {
 			$text = $valueTemp;
 			$valueTemp = 0;
 			return $text;
 		}
-		
 		
 		$patternsEscaped = array();
 		
@@ -619,7 +619,6 @@ setTimeout(function() {
 			$patternsEscaped = array_merge($patternsEscaped, $rsOne['patterns']);
 		}
 		$rsOne = false;
-		
 		
 		$rsOne = PepVN_Data::escapeHtmlTagsAndContents($text,'pre');
 		
@@ -693,22 +692,31 @@ setTimeout(function() {
 						
 							if(isset($matched2[2]) && $matched2[2]) {
 								
-								$matched2[2] = trim($matched2[2]);
+								$matched2 = trim($matched2[2]);
 								
 								$isProcessStatus1 = true;
 								
 								if($patternJavascriptExcludeUrl) {
-									if(preg_match('#('.$patternJavascriptExcludeUrl.')#i',$matched2[2],$matched3)) {
+									if(preg_match('#('.$patternJavascriptExcludeUrl.')#i',$matched2)) {
 										$isProcessStatus1 = false;
 									}
 								}
 								
-								if(isset($options['optimize_javascript_exclude_external_javascript_enable']) && $options['optimize_javascript_exclude_external_javascript_enable']) {
-									if(!preg_match('#^(https?)?:?(//)?'.$fullDomainNamePregQuote.'#i',$matched2[2],$matched3)) {
-										
+								if($isProcessStatus1) {
+									if(preg_match($this->patternsIgnoredJavascript_Uri,$matched2)) {
 										$isProcessStatus1 = false;
 									}
 								}
+								
+								if($isProcessStatus1) {
+									if(isset($options['optimize_javascript_exclude_external_javascript_enable']) && $options['optimize_javascript_exclude_external_javascript_enable']) {
+										if(!preg_match('#^(https?)?:?(//)?'.$fullDomainNamePregQuote.'#i',$matched2)) {
+											
+											$isProcessStatus1 = false;
+										}
+									}
+								}
+								
 								
 								if($isProcessStatus1) {
 									$rsGetAllJavascripts1[$key1] = $value1;
@@ -717,17 +725,17 @@ setTimeout(function() {
 						} else if(preg_match('/<script[^><]*>(.*?)<\/script>/is',$value1,$matched2)) {
 						
 							if(isset($matched2[1]) && $matched2[1]) {
-								$matched2[1] = trim($matched2[1]);
-								if($matched2[1]) {
-									if(preg_match('#\s*?st_go\(\{.+#is',$matched2[1],$matched3)) { 
+								$matched2 = trim($matched2[1]);
+								if($matched2) {
+									if(preg_match('#\s*?st_go\(\{.+#is',$matched2)) { 
 									
-									} else {
+									} else if(!preg_match($this->patternsIgnoredJavascript_Code,$matched2)) {
 										
 										if(isset($options['optimize_javascript_combine_javascript_enable']) && ($options['optimize_javascript_combine_javascript_enable'])) {	
 											if(isset($options['optimize_javascript_exclude_inline_javascript_enable']) && ($options['optimize_javascript_exclude_inline_javascript_enable'])) {
-												$matched2[1] = pepvn_MinifyJavascript($this->fix_javascript_code($matched2[1]));
+												$matched2 = pepvn_MinifyJavascript($this->fix_javascript_code($matched2));
 												$arrayDataTextNeedReplace[$value1] = $this->parse_load_html_scripts_by_tag(array(
-													'url' => '|__ecv__|'.PepVN_Data::encodeVar($matched2[1])//base64_encode($matched2[1])
+													'url' => '|__ecv__|'.PepVN_Data::encodeVar($matched2)//base64_encode($matched2)
 													,'load_by' => 'js_data'//js_data,div_tag
 													,'file_type' => 'js'
 												));
@@ -746,6 +754,7 @@ setTimeout(function() {
 								}
 							}
 						}
+						
 						$matched2 = 0;
 					}
 					
@@ -890,7 +899,7 @@ setTimeout(function() {
 							$filemtimeTemp1 = filemtime($combinedAllJavascriptsFilesPath1);
 							if($filemtimeTemp1) {
 								$filemtimeTemp1 = (int)$filemtimeTemp1;
-								if((PepVN_Data::$defaultParams['requestTime'] - $filemtimeTemp1) <= (3600 * 6)) {
+								if((PepVN_Data::$defaultParams['requestTime'] - $filemtimeTemp1) <= (3600 * 12)) {
 									$combinedAllJavascriptsFilesPath1 = false;
 								} else {
 									unlink($combinedAllJavascriptsFilesPath1);
@@ -1599,7 +1608,7 @@ setTimeout(function() {
 		
 		$text = trim($text); 
 		
-		PepVN_Data::$cacheObject->set_cache($keyCacheProcessMain,$text);
+		PepVN_Data::$cachePermanentObject->set_cache($keyCacheProcessMain,$text);
 		
 		return $text;
 		
@@ -1607,6 +1616,19 @@ setTimeout(function() {
 	
 	private function _reduce_space_in_html_ref(&$text) 
 	{
+		
+		$keyCache1 = PepVN_Data::fKey(array(
+			__METHOD__
+			,$text
+		));
+
+		$resultData = PepVN_Data::$cachePermanentObject->get_cache($keyCache1);
+
+		if(null !== $resultData) {
+			$text = $resultData;
+			return $text;
+		}
+		
 		$patternsEscaped = array();
 		
 		preg_match_all('#<(script|pre)[^><]*>.*?</\1>#is',$text,$matched1);
@@ -1634,7 +1656,14 @@ setTimeout(function() {
 		}
 		
 		$patternsEscaped = 0;
+		
+		$text = trim($text);
+		
+		PepVN_Data::$cachePermanentObject->set_cache($keyCache1, $text);
+		
+		return $text;
 	}
+	
 	
 	public function cdn_get_cdn_link($input_link) 
 	{
@@ -1725,7 +1754,6 @@ setTimeout(function() {
 	*/
 	public function cdn_process_text(&$text, $input_type) 
 	{
-		global $wpOptimizeByxTraffic;
 		
 		$options = $this->get_options(array(
 			'cache_status' => 1
@@ -1734,13 +1762,13 @@ setTimeout(function() {
 		$checkStatus1 = true; 
 				
 		if($checkStatus1) {
-			if ( is_feed() ) {
+			if ( PepVN_Data::wp_is_feed() ) {
 				$checkStatus1 = false;
 			}
 		}
 		
 		if($checkStatus1) {
-			if ( is_admin() ) {
+			if ( PepVN_Data::wp_is_admin() ) {
 				$checkStatus1 = false;
 			}
 		}
@@ -1770,16 +1798,33 @@ setTimeout(function() {
 			,'process_main'
 		);
 		
+		$arrayOptionsFactorsAffectingKeyCache = array(
+			'cdn_enable'
+			,'cdn_domain'
+			,'cdn_exclude_url'
+		);
+		
+		foreach($arrayOptionsFactorsAffectingKeyCache as $value1) {
+			if(isset($options[$value1])) {
+				$keyCacheProcessMain[$value1] = $options[$value1];
+			} else {
+				$keyCacheProcessMain[$value1] = 0;
+			}
+		}
+		
+		$arrayOptionsFactorsAffectingKeyCache = 0;
+		
 		$keyCacheProcessMain = PepVN_Data::fKey($keyCacheProcessMain);
 		
-		$valueTemp = PepVN_Data::$cacheObject->get_cache($keyCacheProcessMain);
+		$valueTemp = PepVN_Data::$cachePermanentObject->get_cache($keyCacheProcessMain); 
 		
-		if($valueTemp) {
+		if(null !== $valueTemp) {
 			$text = $valueTemp; 
 			$valueTemp = 0;
 			return $text;
 		}
 		
+		global $wpOptimizeByxTraffic;
 		
 		$allTargetElements = array();
 		$arrayDataTextNeedReplace = array();
@@ -1836,7 +1881,7 @@ setTimeout(function() {
 		
 		$text = trim($text); 
 		
-		PepVN_Data::$cacheObject->set_cache($keyCacheProcessMain,$text);
+		PepVN_Data::$cachePermanentObject->set_cache($keyCacheProcessMain,$text);
 		
 		return $text;
 		
@@ -1881,11 +1926,11 @@ setTimeout(function() {
 		
 		if($queried_object) {
 			$term_id = $queried_object->term_id;
-			if(is_category()) {
+			if(PepVN_Data::wp_is_category()) {
 				$taxObjId = 'cat-'.get_cat_ID();
-			} else if(is_tag()) {
+			} else if(PepVN_Data::wp_is_tag()) {
 				$taxObjId = 'tag-'.$term_id;
-			} else if(is_tax()) {
+			} else if(PepVN_Data::wp_is_tax()) {
 				$taxObjId = 'tax-'.$term_id;
 			}
 		}
@@ -2014,27 +2059,19 @@ setTimeout(function() {
 				
 				PepVN_Data::$cacheObject->set_cache($filenamecache, $input_parameters['content']);
 				
+				
 				global $wpOptimizeByxTraffic_AdvancedCache;
 				
 				$wpOptimizeByxTraffic_AdvancedCache->optimize_cache_check_and_create_static_page_cache_for_server_software(array(
 					'content' => $input_parameters['content']
 					,'force_write_status' => 1
 				));
+				
 			}
 		}
 		
 		
 	}
-	
-	
-	public function optimize_cache_check_and_create_static_page_cache_for_server_software($input_parameters)
-	{
-		global $wpOptimizeByxTraffic_AdvancedCache;
-		$wpOptimizeByxTraffic_AdvancedCache->optimize_cache_check_and_create_static_page_cache_for_server_software($input_parameters);
-		
-	}
-	
-	
 	
 	
 	public function optimize_cache_prebuild_urls_cache()
@@ -2316,6 +2353,8 @@ setTimeout(function() {
 			$classSystemReady = 'wpoptimizebyxtraffic_disabled';
 		}
 		
+		$wpOptimizeByxTraffic->display_admin_notices_session();
+		
 		echo '
 
 <div class="wrap wpoptimizebyxtraffic_admin ',$classSystemReady,'" style="">
@@ -2421,27 +2460,20 @@ setTimeout(function() {
 								</li> 
 								
 								<li style="margin-bottom: 3%;">
-									
 									<h6 style="margin-bottom: 0%;"><input type="checkbox" name="optimize_cache_mobile_device_cache_enable" class="" ',$optimize_cache_mobile_device_cache_enable,' /> &nbsp; ',__('Enable Cache For Mobile Device',$this->PLUGIN_SLUG),'</h6>
 									<p class="description" style="color:red;">',__('Warning',$this->PLUGIN_SLUG),': ',__('Don\'t turn on this option if you use one of these plugins: WP Touch, WP Mobile Detector, wiziApp, and WordPress Mobile Pack.',$this->PLUGIN_SLUG),'</p>
-									
+									<p class="description" style="">',__('If you use wordpress theme responsive, you should enable this feature.',$this->PLUGIN_SLUG),'</p>
 								</li> 
 								
 								<li>
-									
 									<h6 style=""><input type="checkbox" name="optimize_cache_url_get_query_cache_enable" class="" ',$optimize_cache_url_get_query_cache_enable,' /> &nbsp; ',__('Enable Cache URIs with GET query string variables',$this->PLUGIN_SLUG),'</h6>
 									<p class="description" style="margin-bottom: 3%;">',__('Ex : "/?s=query..." at the end of a url',$this->PLUGIN_SLUG),'</p>
-									
 								</li> 
-								
-								
 								
 								<li>
 									<h6 style="margin-bottom: 3%;"><input type="checkbox" name="optimize_cache_logged_users_cache_enable" class="" ',$optimize_cache_logged_users_cache_enable,' /> &nbsp; ',__('Enable Cache For Logged Users',$this->PLUGIN_SLUG),'</h6>
 									<p class="description"></p>
 								</li> 
-								
-								
 								
 								<li style="margin-bottom: 3%;">
 									
@@ -2459,14 +2491,10 @@ setTimeout(function() {
 									</div>
 								</li> 
 								
-								
-								
-						
 								<li style="margin-bottom: 3%;">
 									<h6> ',__('Cache Timeout',$this->PLUGIN_SLUG),'&nbsp;:&nbsp;<input type="text" name="optimize_cache_cachetimeout" class="" value="',$optimize_cache_cachetimeout,'" style="width: 100px;" />&nbsp;seconds </h6> 
 									<p class="description">',__('How long should cached pages remain fresh? You should set this value from 21600 seconds (6 hours) to 86400 seconds (24 hours). Minimum value is 300 seconds (5 minutes).',$this->PLUGIN_SLUG),'</p>
 								</li>
-								
 								
 								<li style="margin-bottom: 3%;">
 									<h6> ',__('Exclude url',$this->PLUGIN_SLUG),' (',__('Contained in url, separate them by comma',$this->PLUGIN_SLUG),')</h6> 
@@ -2496,12 +2524,6 @@ setTimeout(function() {
 					</div><!-- //xtraffic_tabs_contents -->  
 					
 					
-					
-					
-					
-					
-					
-					
 					<div id="xtraffic_tabs_content2" class="xtraffic_tabs_contents">
 
 						<h3>Optimize Javascript</h3>
@@ -2524,22 +2546,6 @@ setTimeout(function() {
 									<p class="description"></p>
 									
 								</li> 
-								
-								<!--
-								<div style="margin-top: 0;" id="optimize_javascript_container2" class="wpoptimizebyxtraffic_show_hide_container">
-									
-									<ul>
-									
-										<li>
-											
-											<h6 style="margin-bottom: 3%;"><input type="checkbox" name="optimize_javascript_minify_javascript_enable" class="" ',$optimize_javascript_minify_javascript_enable,' /> &nbsp; ',__('Enable Minify Javascript',$this->PLUGIN_SLUG),' ( ',__('Recommended',$this->PLUGIN_SLUG),' )</h6>
-											<p class="description"></p>
-											
-										</li>
-									</ul>
-									
-								</div>
-								-->
 								
 								<li>
 											
@@ -2582,9 +2588,6 @@ setTimeout(function() {
 						</div>
 						
 					</div><!-- //xtraffic_tabs_contents -->  
-					
-					
-					
 					
 					<div id="xtraffic_tabs_content3" class="xtraffic_tabs_contents">
 
@@ -2828,12 +2831,12 @@ setTimeout(function() {
 				'optimize_cache_browser_cache_enable' => 'on',//on
 				'optimize_cache_front_page_cache_enable' => 'on',//on
 				'optimize_cache_feed_page_cache_enable' => 'on',//on
-				'optimize_cache_ssl_request_cache_enable' => '',//on
+				'optimize_cache_ssl_request_cache_enable' => 'on',//on
 				'optimize_cache_mobile_device_cache_enable' => '',//on
-				'optimize_cache_url_get_query_cache_enable' => '',//on
+				'optimize_cache_url_get_query_cache_enable' => 'on',//on
 				'optimize_cache_logged_users_cache_enable' => '',//on
 				
-				'optimize_cache_database_cache_enable' => '',//on
+				'optimize_cache_database_cache_enable' => 'on',//on
 				'optimize_cache_database_cache_methods' => array(),//array('apc' => 'apc','memcache' => 'memcache', 'file' => 'file')
 				
 				'optimize_cache_prebuild_cache_enable' => '',//on
@@ -2871,11 +2874,10 @@ setTimeout(function() {
 				'optimize_html_minify_html_enable' => 'on',//on
 				
 				
-				
 				//cdn
 				'cdn_enable' => '',//on
 				'cdn_domain' => '',//string
-				'cdn_exclude_url' => 'captcha,/wp-admin/,.php,',//string 
+				'cdn_exclude_url' => 'captcha,/wp-admin/,.php,',//string
 				
 			);
 		}
@@ -3030,26 +3032,40 @@ setTimeout(function() {
 		
 	}
 	
+	
 	public function update_options($options_id, $options, $input_configs = false)
 	{
 		if(!$input_configs) {
 			$input_configs = array();
 		}
 		
-		if(isset($input_configs['merge_status']) && $input_configs['merge_status']) {
+		$base_is_set_server_config_for_optimize_speed = false;
+		
+		$optionsSaved = get_option($options_id);
+		
+		if (!empty($optionsSaved)) {
 			
-			$optionsSaved = get_option($options_id);
+			global $wpOptimizeByxTraffic;
 			
-			if (!empty($optionsSaved)) {
-			
-				foreach ($options as $key1 => $value1) {
-					$optionsSaved[$key1] = $value1;
+			foreach ($options as $key1 => $value1) {
+				if(isset($wpOptimizeByxTraffic) && $wpOptimizeByxTraffic) {
+					if($wpOptimizeByxTraffic->base_is_set_server_config_for_optimize_speed($key1)) {
+						if(isset($optionsSaved[$key1])) {
+							if($optionsSaved[$key1] != $value1) {
+								$base_is_set_server_config_for_optimize_speed = true;
+							}
+						}
+					}
 				}
 				
-				$options = $optionsSaved;
-				$optionsSaved = 0;
-				
+				$optionsSaved[$key1] = $value1;
 			}
+			
+			if(isset($input_configs['merge_status']) && $input_configs['merge_status']) {
+				$options = $optionsSaved;
+			}
+			
+			$optionsSaved = 0;
 			
 		}
 		
@@ -3057,6 +3073,10 @@ setTimeout(function() {
 		
 		if(!PepVN_Data::$cacheObject->get_cache(WPOPTIMIZESPEEDBYXTRAFFIC_PLUGIN_OPTIONS_CACHE_KEY)) {
 			PepVN_Data::$cacheObject->set_cache(WPOPTIMIZESPEEDBYXTRAFFIC_PLUGIN_OPTIONS_CACHE_KEY, $resultData);
+		}
+		
+		if($base_is_set_server_config_for_optimize_speed) {
+			$this->set_server_config_for_optimize_speed();
 		}
 		
 		return $resultData;

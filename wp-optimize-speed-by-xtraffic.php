@@ -1,11 +1,11 @@
 <?php
 /*
 Plugin Name: WP Optimize Speed By xTraffic
-Version: 1.0.0
+Version: 1.0.1
 Plugin URI: http://blog-xtraffic.pep.vn/
 Author: xTraffic
 Author URI: http://blog-xtraffic.pep.vn/
-Description: WP Optimize Speed provides automatically optimize your WordPress site
+Description: Plugin speeds up your website runs faster and better performance.
 */
 
 if ( ! defined( 'WPOPTIMIZESPEEDBYXTRAFFIC_PLUGIN_INIT' ) ) : 
@@ -13,14 +13,12 @@ if ( ! defined( 'WPOPTIMIZESPEEDBYXTRAFFIC_PLUGIN_INIT' ) ) :
 define( 'WPOPTIMIZESPEEDBYXTRAFFIC_PLUGIN_INIT', 1 );
 
 if ( ! defined( 'WPOPTIMIZESPEEDBYXTRAFFIC_PLUGIN_VERSION' ) ) {
-	define( 'WPOPTIMIZESPEEDBYXTRAFFIC_PLUGIN_VERSION', '1.0.0' );
+	define( 'WPOPTIMIZESPEEDBYXTRAFFIC_PLUGIN_VERSION', '1.0.1' );
 }
 
 if ( ! defined( 'WPOPTIMIZESPEEDBYXTRAFFIC_PLUGIN_TIMESTART' ) ) {
 	define( 'WPOPTIMIZESPEEDBYXTRAFFIC_PLUGIN_TIMESTART', microtime(true));
 }
-
-
 
 global $wpOptimizeSpeedByxTraffic;
 
@@ -92,9 +90,9 @@ if ( class_exists('WPOptimizeSpeedByxTraffic') ) :
 		function wpOptimizeSpeedByxTraffic_init_first()
 		{
 			global $wpOptimizeByxTraffic_AdvancedCache;
-				
+			
 			if(isset($wpOptimizeByxTraffic_AdvancedCache) && $wpOptimizeByxTraffic_AdvancedCache) {
-				$wpOptimizeByxTraffic_AdvancedCache->checkAndInitWpdbCache();
+				//$wpOptimizeByxTraffic_AdvancedCache->checkAndInitWpdbCache();
 			}
 		}
 
