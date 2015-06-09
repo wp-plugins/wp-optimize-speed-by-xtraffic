@@ -460,7 +460,25 @@ class WPOptimizeSpeedByxTraffic_Base
 				,'application/x-font-ttf', 'application/x-font-otf'
 				,'font/truetype', 'font/opentype'
 			);
-			
+            
+            $arrayPatternsCookiesNotCache = PepVN_Data::$defaultParams['wp_cookies_not_cache'];
+            
+            $options['optimize_cache_exclude_cookie'] = trim($options['optimize_cache_exclude_cookie']);
+            if($options['optimize_cache_exclude_cookie']) {
+                $arrayPatternsCookiesNotCache[] = $options['optimize_cache_exclude_cookie'];
+            }
+            
+            $arrayPatternsCookiesNotCache = PepVN_Data::cleanPregPatternsArray($arrayPatternsCookiesNotCache);
+            
+            $arrayPatternsRequestUriNotCache = PepVN_Data::$defaultParams['wp_request_uri_not_cache'];
+            
+            $options['optimize_cache_exclude_url'] = trim($options['optimize_cache_exclude_url']);
+            if($options['optimize_cache_exclude_url']) {
+                $arrayPatternsRequestUriNotCache[] = $options['optimize_cache_exclude_url'];
+            }
+            
+            $arrayPatternsRequestUriNotCache = PepVN_Data::cleanPregPatternsArray($arrayPatternsRequestUriNotCache);
+            
 			if('apache' === PepVN_Data::$defaultParams['serverSoftware']) {
 				
 				$pathFileHtaccess = $pathRootWP.'.htaccess';
@@ -518,33 +536,41 @@ PHP_EOL . 'RewriteCond %{HTTP:X-Wap-Profile} !^[a-z0-9\"]+ [NC]'
 						$myHtaccessConfig_RewriteCond_QUERY_STRING = '';
 					}
 					
-					
-					
-					
-					
-					
-					
-					
+                    
+                    $myHtaccessConfig_RewriteCond_RequestUriQueryNotCache = '';
+					$valueTemp = str_replace('#','\#',implode('|',$arrayPatternsRequestUriNotCache));
+					$myHtaccessConfig_RewriteCond_RequestUriQueryNotCache .= PHP_EOL . 'RewriteCond %{QUERY_STRING} !^.*('.$valueTemp.').*$';
+                    $myHtaccessConfig_RewriteCond_RequestUriQueryNotCache .= PHP_EOL . 'RewriteCond %{REQUEST_URI} !^.*('.$valueTemp.').*$';
+                    
+                    
+                    $myHtaccessConfig_RewriteCond_CookiesNotCache = '';
+					$valueTemp = str_replace('#','\#',implode('|',$arrayPatternsCookiesNotCache));
+					$myHtaccessConfig_RewriteCond_CookiesNotCache .= PHP_EOL . 'RewriteCond %{HTTP:Cookie} !^.*('.$valueTemp.').*$';
+                    
+                    
 					$myHtaccessConfig_RewriteCond_RewriteRule_AutoResizeImagesFitWidth = '';
 					
 					if(isset($wpOptimizeByxTraffic_options['optimize_images_auto_resize_images_enable']) && $wpOptimizeByxTraffic_options['optimize_images_auto_resize_images_enable']) {
 						
 						$myHtaccessConfig_RewriteCond_RewriteRule_AutoResizeImagesFitWidth = 
 PHP_EOL . '#http for auto resize image#
-RewriteCond %{REQUEST_URI} !^.*//.*$
-RewriteCond %{REQUEST_URI} !^.*(wp-includes|wp-content|wp-admin|\.php).*$
-RewriteCond %{REQUEST_METHOD} GET'.$myHtaccessConfig_RewriteCond_QUERY_STRING.'
-RewriteCond %{HTTP:Cookie} !^.*(comment_author_|wordpress_logged_in|wp-postpass_).*$'.$myHtaccessConfig_ForNotCacheMobile.'
+RewriteCond %{REQUEST_URI} !^.*//.*$'.$myHtaccessConfig_RewriteCond_RequestUriQueryNotCache.'
+RewriteCond %{REQUEST_METHOD} GET'
+.$myHtaccessConfig_RewriteCond_QUERY_STRING
+.$myHtaccessConfig_RewriteCond_CookiesNotCache
+.$myHtaccessConfig_ForNotCacheMobile.'
 RewriteCond %{HTTPS} !on
 RewriteCond %{HTTP_COOKIE} xtrdvscwd=([^;]+) [NC]
 RewriteCond %{DOCUMENT_ROOT}'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index-sw_%1.html -f
 RewriteRule '.$myHtaccessConfig_RewriteRule_Patterns1.' "'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index-sw_%1.html" [L]
 
 #https for auto resize image#
-RewriteCond %{REQUEST_URI} !^.*//.*$
+RewriteCond %{REQUEST_URI} !^.*//.*$'.$myHtaccessConfig_RewriteCond_RequestUriQueryNotCache.'
 RewriteCond %{REQUEST_URI} !^.*(wp-includes|wp-content|wp-admin|\.php).*$
-RewriteCond %{REQUEST_METHOD} GET'.$myHtaccessConfig_RewriteCond_QUERY_STRING.'
-RewriteCond %{HTTP:Cookie} !^.*(comment_author_|wordpress_logged_in|wp-postpass_).*$'.$myHtaccessConfig_ForNotCacheMobile.'
+RewriteCond %{REQUEST_METHOD} GET'
+.$myHtaccessConfig_RewriteCond_QUERY_STRING
+.$myHtaccessConfig_RewriteCond_CookiesNotCache
+.$myHtaccessConfig_ForNotCacheMobile.'
 RewriteCond %{HTTPS} on
 RewriteCond %{HTTP_COOKIE} xtrdvscwd=([^;]+) [NC]
 RewriteCond %{DOCUMENT_ROOT}'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index-sw_%1.html -f
@@ -652,17 +678,21 @@ AddDefaultCharset UTF-8
 '.$myHtaccessConfig_RewriteCond_RewriteRule_AutoResizeImagesFitWidth.'
 
 #http#
-RewriteCond %{REQUEST_URI} !^.*(wp-includes|wp-content|wp-admin|\.php).*$
-RewriteCond %{REQUEST_METHOD} GET'.$myHtaccessConfig_RewriteCond_QUERY_STRING.'
-RewriteCond %{HTTP:Cookie} !^.*(comment_author_|wordpress_logged_in|wp-postpass_).*$'.$myHtaccessConfig_ForNotCacheMobile.'
+RewriteCond %{REQUEST_URI} !^.*//.*$'.$myHtaccessConfig_RewriteCond_RequestUriQueryNotCache.'
+RewriteCond %{REQUEST_METHOD} GET'
+.$myHtaccessConfig_RewriteCond_QUERY_STRING
+.$myHtaccessConfig_RewriteCond_CookiesNotCache
+.$myHtaccessConfig_ForNotCacheMobile.'
 RewriteCond %{HTTPS} !on
 RewriteCond %{DOCUMENT_ROOT}'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index-sw_.html -f
 RewriteRule '.$myHtaccessConfig_RewriteRule_Patterns1.' "'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index-sw_.html" [L]
 
 #https#
-RewriteCond %{REQUEST_URI} !^.*(wp-includes|wp-content|wp-admin|\.php).*$
-RewriteCond %{REQUEST_METHOD} GET'.$myHtaccessConfig_RewriteCond_QUERY_STRING.'
-RewriteCond %{HTTP:Cookie} !^.*(comment_author_|wordpress_logged_in|wp-postpass_).*$'.$myHtaccessConfig_ForNotCacheMobile.'
+RewriteCond %{REQUEST_URI} !^.*//.*$'.$myHtaccessConfig_RewriteCond_RequestUriQueryNotCache.'
+RewriteCond %{REQUEST_METHOD} GET'
+.$myHtaccessConfig_RewriteCond_QUERY_STRING
+.$myHtaccessConfig_RewriteCond_CookiesNotCache
+.$myHtaccessConfig_ForNotCacheMobile.'
 RewriteCond %{HTTPS} on
 RewriteCond %{DOCUMENT_ROOT}'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index-https-sw_.html -f
 RewriteRule '.$myHtaccessConfig_RewriteRule_Patterns1.' "'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index-https-sw_.html" [L]
@@ -670,21 +700,23 @@ RewriteRule '.$myHtaccessConfig_RewriteRule_Patterns1.' "'.$myHtaccessConfig_Rew
 ###### XML ######
 
 #http#
-RewriteCond %{REQUEST_URI} !^.*//.*$
+RewriteCond %{REQUEST_URI} !^.*//.*$'.$myHtaccessConfig_RewriteCond_RequestUriQueryNotCache.'
 RewriteCond %{REQUEST_URI} !^.*(wp-includes|wp-content|wp-admin|\.php).*$
 RewriteCond %{REQUEST_METHOD} GET
-RewriteCond %{QUERY_STRING} !.*=.*
-RewriteCond %{HTTP:Cookie} !^.*(comment_author_|wordpress_logged_in|wp-postpass_).*$'.$myHtaccessConfig_ForNotCacheMobile.'
+RewriteCond %{QUERY_STRING} !.*=.*'
+.$myHtaccessConfig_RewriteCond_CookiesNotCache
+.$myHtaccessConfig_ForNotCacheMobile.'
 RewriteCond %{HTTPS} !on
 RewriteCond %{DOCUMENT_ROOT}'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index.xml -f
 RewriteRule ^(.*) "'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index.xml" [L]
 
 #https#
-RewriteCond %{REQUEST_URI} !^.*//.*$
+RewriteCond %{REQUEST_URI} !^.*//.*$'.$myHtaccessConfig_RewriteCond_RequestUriQueryNotCache.'
 RewriteCond %{REQUEST_URI} !^.*(wp-includes|wp-content|wp-admin|\.php).*$
 RewriteCond %{REQUEST_METHOD} GET
-RewriteCond %{QUERY_STRING} !.*=.*
-RewriteCond %{HTTP:Cookie} !^.*(comment_author_|wordpress_logged_in|wp-postpass_).*$'.$myHtaccessConfig_ForNotCacheMobile.'
+RewriteCond %{QUERY_STRING} !.*=.*'
+.$myHtaccessConfig_RewriteCond_CookiesNotCache
+.$myHtaccessConfig_ForNotCacheMobile.'
 RewriteCond %{HTTP:Accept-Encoding} gzip
 RewriteCond %{HTTPS} on
 RewriteCond %{DOCUMENT_ROOT}'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/%{SERVER_NAME}'.$myHtaccessConfig_RewriteBase_PlusToCache2.'/$1/index-https.xml -f
@@ -844,11 +876,32 @@ RewriteRule ^(.*) "'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cach
 						$myConfigContent_ForNotCacheQuery = '';
 					}
 					
-					
-					
-	
+                    
+                    $myConfigContent_RequestUriQueryNotCache = '';
+					$valueTemp = str_replace('#','\#',implode('|',$arrayPatternsRequestUriNotCache));
+					$myConfigContent_RequestUriQueryNotCache .= PHP_EOL . '
+    if ($request_uri ~* "('.$valueTemp.')") {
+        set $cache_uri \'null cache\';
+    }
+';
+                    $myConfigContent_RequestUriQueryNotCache .= PHP_EOL . '
+    if ($query_string ~* "('.$valueTemp.')") {
+        set $cache_uri \'null cache\';
+    }
+';
+                    
+                    $myConfigContent_CookiesNotCache = '';
+					$valueTemp = str_replace('#','\#',implode('|',$arrayPatternsCookiesNotCache));
+					$myConfigContent_CookiesNotCache .= PHP_EOL . '
 
-					
+	# Don\'t use the cache for logged in users or recent commenters
+
+	if ($http_cookie ~* "(wordpress_[a-f0-9]+|'.$valueTemp.')") {
+		set $cache_uri \'null cache\';
+	}
+
+';
+
 					$myConfigContent_AutoResizeImagesFitScreenWidth1 = '-sw_';
 					if(isset($wpOptimizeByxTraffic_options['optimize_images_auto_resize_images_enable']) && $wpOptimizeByxTraffic_options['optimize_images_auto_resize_images_enable']) {
 						$myConfigContent_AutoResizeImagesFitScreenWidth1 = '-sw_$cookie_xtrdvscwd'; 
@@ -955,16 +1008,9 @@ RewriteRule ^(.*) "'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cach
 	
 	'.$myConfigContent_ForNotCacheQuery.'
 	
-	# Don\'t cache uris containing the following segments
-	if ($request_uri ~* "(/wp-admin/|/wp-content/|/wp-includes/|.*.php)") {
-		set $cache_uri \'null cache\';
-	}
-
-	# Don\'t use the cache for logged in users or recent commenters
-
-	if ($http_cookie ~* "comment_author|wordpress_[a-f0-9]+|wp-postpass|wordpress_logged_in|wptouch_switch_toggle") {
-		set $cache_uri \'null cache\';
-	}
+    '.$myConfigContent_RequestUriQueryNotCache.'
+    
+    '.$myConfigContent_CookiesNotCache.'
 
 	# START MOBILE
 
@@ -981,7 +1027,6 @@ RewriteRule ^(.*) "'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cach
 		index index.php index.html index.htm default.html default.htm;
 		try_files '.
 		'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/$host/$cache_uri/index$https_plus'.$myConfigContent_AutoResizeImagesFitScreenWidth1.'.html '.
-		'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/$host/$cache_uri/index$https_plus-sw_.html '.
 		'/wp-content/cache/'.WPOPTIMIZEBYXTRAFFIC_OPTIMIZE_CACHE_SLUG.'/data/$host/$cache_uri/index$https_plus.xml '.
 		'$uri $uri/ /index.php?$args;
 	}
@@ -1003,6 +1048,8 @@ RewriteRule ^(.*) "'.$myHtaccessConfig_RewriteRule_PlusToCache.'/wp-content/cach
 				}
 			}
 			
+            
+            /*
 			$pathFile1 = $pathRootWP.'wp-settings.php';
 			
 			$fileContent1 = false;
@@ -1050,6 +1097,7 @@ if(file_exists(\''.$pathFile2.'\') && is_file(\''.$pathFile2.'\')) {
 				}
 				
 			}
+            */
 			
 		}
 		
@@ -1070,8 +1118,6 @@ if(file_exists(\''.$pathFile2.'\') && is_file(\''.$pathFile2.'\')) {
 				$wpOptimizeByxTraffic->add_admin_notice_session('warning', 'You need to restart Nginx via the command ssh "service nginx restart" for the new setting to take effect!');
 			}
 		}
-		
-		
 	}
 	
 	

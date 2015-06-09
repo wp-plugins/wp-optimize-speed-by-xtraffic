@@ -51,5 +51,11 @@ To install the plugin "***WP Optimize Speed By xTraffic***" and get it working :
 
 == Changelog ==
 
-= 1.0 =
+= 1.0.2 =
+* Fix some issue
+
+= 1.0.1 =
+* Fix some issue
+
+= 1.0.0 =
 * Plugin **WP Optimize Speed By xTraffic** automatically optimizes speed WordPress site and increase website's Google PageSpeed Insights point.

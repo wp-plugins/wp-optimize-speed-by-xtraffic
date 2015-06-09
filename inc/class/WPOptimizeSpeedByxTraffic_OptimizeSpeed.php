@@ -315,6 +315,7 @@ class WPOptimizeSpeedByxTraffic_OptimizeSpeed extends WPOptimizeSpeedByxTraffic_
 			}
 			
 			PepVN_Data::$cacheObject->set_cache($keyCache, $resultData);
+            
 		}
 		
 		return $resultData;
@@ -517,6 +518,41 @@ setTimeout(function() {
 		return $resultData;
 	}
 	
+    
+    
+    private function _get_key_salt($type) 
+	{
+        if(!isset($this->baseCacheData[$type])) {
+            
+            $options = $this->get_options(array(
+                'cache_status' => 1
+            ));
+            
+            if('optimize_js' === $type) {
+                $this->baseCacheData[$type] = PepVN_Data::fKey(array(
+                    'optimize_javascript_enable' => $options['optimize_javascript_enable']
+                    ,'optimize_javascript_combine_javascript_enable' => $options['optimize_javascript_combine_javascript_enable']
+                    ,'optimize_javascript_minify_javascript_enable' => $options['optimize_javascript_minify_javascript_enable']
+                    ,'optimize_javascript_asynchronous_javascript_loading_enable' => $options['optimize_javascript_asynchronous_javascript_loading_enable']
+                    ,'optimize_javascript_exclude_external_javascript_enable' => $options['optimize_javascript_exclude_external_javascript_enable']
+                    ,'optimize_javascript_exclude_inline_javascript_enable' => $options['optimize_javascript_exclude_inline_javascript_enable']
+                    ,'optimize_javascript_exclude_url' => $options['optimize_javascript_exclude_url']
+                ));
+            } else if('optimize_css' === $type) {
+                $this->baseCacheData[$type] = PepVN_Data::fKey(array(
+                    'optimize_css_enable' => $options['optimize_css_enable']
+                    ,'optimize_css_combine_css_enable' => $options['optimize_css_combine_css_enable']
+                    ,'optimize_css_minify_css_enable' => $options['optimize_css_minify_css_enable']
+                    ,'optimize_css_asynchronous_css_loading_enable' => $options['optimize_css_asynchronous_css_loading_enable']
+                    ,'optimize_css_exclude_external_css_enable' => $options['optimize_css_exclude_external_css_enable']
+                    ,'optimize_css_exclude_inline_css_enable' => $options['optimize_css_exclude_inline_css_enable']
+                    ,'optimize_css_exclude_url' => $options['optimize_css_exclude_url']
+                ));
+            }
+        }
+        
+        return $this->baseCacheData[$type];
+    }        
 	
 	
 	public function process_html_pages(&$text) 
@@ -603,7 +639,7 @@ setTimeout(function() {
 			,'options' => $options
 		));
 		
-		$valueTemp = PepVN_Data::$cachePermanentObject->get_cache($keyCacheProcessMain);
+		$valueTemp = PepVN_Data::$cacheObject->get_cache($keyCacheProcessMain);
 		
 		if(null !== $valueTemp) {
 			$text = $valueTemp;
@@ -762,7 +798,10 @@ setTimeout(function() {
 				}
 				
 				$rsGetAllJavascripts = $rsGetAllJavascripts1; $rsGetAllJavascripts1 = 0;
-				
+                
+                
+                $keySaltProcessJavascript = $this->_get_key_salt('optimize_js');
+                
 				if(!$combineJavascriptsStatus) {
 					
 					$iNumberScript1 = 1;
@@ -784,7 +823,7 @@ setTimeout(function() {
 							
 								if(isset($options['optimize_javascript_minify_javascript_enable']) && $options['optimize_javascript_minify_javascript_enable']) {
 									
-									$keyCacheJsLink1 = PepVN_Data::fKey($jsLink1);
+									$keyCacheJsLink1 = PepVN_Data::fKey(array($keySaltProcessJavascript,$jsLink1));
 									
 									$jsLink1FilesPath = false;
 									
@@ -886,7 +925,7 @@ setTimeout(function() {
 				} else {//enable combine js
 			
 					
-					$keyCacheAllJavascripts = PepVN_Data::fKey($rsGetAllJavascripts);
+					$keyCacheAllJavascripts = PepVN_Data::fKey(array($keySaltProcessJavascript,$rsGetAllJavascripts));
 					
 					$combinedAllJavascriptsFilesPath = false;
 					
@@ -1074,6 +1113,8 @@ setTimeout(function() {
 			$rsGetAllCss = $this->get_all_css($text); 
 			
 			if(!PepVN_Data::isEmptyArray($rsGetAllCss)) {
+                
+                $keySaltProcessCSS = $this->_get_key_salt('optimize_css');
 				
 				if(!$combineCssStatus) {	//combineCssStatus:false
 					
@@ -1132,6 +1173,7 @@ setTimeout(function() {
 									$keyCacheCssFile1 = PepVN_Data::fKey(array(
 										__METHOD__
 										,$cssLink1
+                                        ,$keySaltProcessCSS
 									));
 									
 									$cssFilePath1 = false;
@@ -1365,7 +1407,11 @@ setTimeout(function() {
 					
 					$appendCssToHead = '';
 					
-					$keyCacheAllCss = PepVN_Data::fKey($rsGetAllCssGroup);
+                    $keyCacheAllCss = PepVN_Data::fKey(array(
+                        __METHOD__
+                        ,$rsGetAllCssGroup
+                        ,$keySaltProcessCSS
+                    ));
 					
 					$combinedAllCssFilesPath = false;
 					
@@ -1608,7 +1654,7 @@ setTimeout(function() {
 		
 		$text = trim($text); 
 		
-		PepVN_Data::$cachePermanentObject->set_cache($keyCacheProcessMain,$text);
+		PepVN_Data::$cacheObject->set_cache($keyCacheProcessMain,$text);
 		
 		return $text;
 		
@@ -1619,10 +1665,10 @@ setTimeout(function() {
 		
 		$keyCache1 = PepVN_Data::fKey(array(
 			__METHOD__
-			,$text
+			,$text 
 		));
-
-		$resultData = PepVN_Data::$cachePermanentObject->get_cache($keyCache1);
+        
+		$resultData = PepVN_Data::$cacheObject->get_cache($keyCache1);
 
 		if(null !== $resultData) {
 			$text = $resultData;
@@ -1659,7 +1705,7 @@ setTimeout(function() {
 		
 		$text = trim($text);
 		
-		PepVN_Data::$cachePermanentObject->set_cache($keyCache1, $text);
+		PepVN_Data::$cacheObject->set_cache($keyCache1, $text);
 		
 		return $text;
 	}
@@ -1816,7 +1862,7 @@ setTimeout(function() {
 		
 		$keyCacheProcessMain = PepVN_Data::fKey($keyCacheProcessMain);
 		
-		$valueTemp = PepVN_Data::$cachePermanentObject->get_cache($keyCacheProcessMain); 
+		$valueTemp = PepVN_Data::$cacheObject->get_cache($keyCacheProcessMain); 
 		
 		if(null !== $valueTemp) {
 			$text = $valueTemp; 
@@ -1881,7 +1927,7 @@ setTimeout(function() {
 		
 		$text = trim($text); 
 		
-		PepVN_Data::$cachePermanentObject->set_cache($keyCacheProcessMain,$text);
+		PepVN_Data::$cacheObject->set_cache($keyCacheProcessMain,$text);
 		
 		return $text;
 		

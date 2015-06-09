@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: WP Optimize Speed By xTraffic
-Version: 1.0.1
+Version: 1.0.2
 Plugin URI: http://blog-xtraffic.pep.vn/
 Author: xTraffic
 Author URI: http://blog-xtraffic.pep.vn/
@@ -13,7 +13,7 @@ if ( ! defined( 'WPOPTIMIZESPEEDBYXTRAFFIC_PLUGIN_INIT' ) ) :
 define( 'WPOPTIMIZESPEEDBYXTRAFFIC_PLUGIN_INIT', 1 );
 
 if ( ! defined( 'WPOPTIMIZESPEEDBYXTRAFFIC_PLUGIN_VERSION' ) ) {
-	define( 'WPOPTIMIZESPEEDBYXTRAFFIC_PLUGIN_VERSION', '1.0.1' );
+	define( 'WPOPTIMIZESPEEDBYXTRAFFIC_PLUGIN_VERSION', '1.0.2' );
 }
 
 if ( ! defined( 'WPOPTIMIZESPEEDBYXTRAFFIC_PLUGIN_TIMESTART' ) ) {
