@@ -71,9 +71,15 @@
 			<li role="presentation">
 				<a href="#optimize-html" aria-controls="optimize-html" role="tab" data-toggle="tab">Optimize HTML</a>
 			</li>
+			
 			<li role="presentation">
 				<a href="#optimize-cdn" aria-controls="cdn" role="tab" data-toggle="tab">CDN</a>
 			</li>
+			
+			<li role="presentation" style="display:none;">
+				<a href="#optimize-others" aria-controls="others" role="tab" data-toggle="tab">Others</a>
+			</li>
+			
 			<li role="presentation" style="display:none;" id="memcache-servers-button">
 				<a href="#memcache-servers" aria-controls="cdn" role="tab" data-toggle="tab">Memcache</a>
 			</li>
@@ -169,6 +175,63 @@
 												<h4 style="margin: 0;">
 													<input type="checkbox" name="optimize_cache_database_cache_methods[memcache]" value="memcache" <?php 
 														echo (isset($bindPostData['optimize_cache_database_cache_methods']['memcache']) ? ' checked ' : '');
+													?> class="wppepvn_toggle_show_hide_trigger" data-target="#memcache-servers-button" />&nbsp;<?php $translate->e('Use Memcache'); ?>
+												</h4>
+											</label>
+										</div>
+										<p style="margin-left:25px;"><i></i></p>
+									</div>
+									<?php endif; ?>
+									
+									<div style="margin-left:5%; margin-bottom: 0px;">
+										<div class="checkbox" style="margin-bottom: 5px;">
+											<label>
+												<h4 style="margin: 0;">
+													<input type="checkbox" disabled checked />&nbsp;<?php $translate->e('Use File (Default)'); ?>
+												</h4>
+											</label>
+										</div>
+										<p style="margin-left:25px;"><i><?php $translate->e('Plugin use Multi-Cache with the priority order of speed "APC > Memcache > File", help your website fast and stable operation of the most.'); ?></i></p>
+									</div>
+								</div>
+								
+							</div>
+							
+							
+							<div style="margin-left:5%; margin-bottom: 20px; display:none;">
+								<div class="checkbox" style="margin-bottom: 5px;">
+									<label>
+										<h4 style="margin: 0;">
+											<?php echo $form->render('optimize_cache_object_cache_enable'); ?>&nbsp;<?php $translate->e('Enable Object Cache ( Recommended )'); ?>
+										</h4>
+									</label>
+								</div>
+								<p style="margin-left:25px;"><i><?php $translate->e('This feature helps to increase website speed.'); ?></i></p>
+								
+								<div id="optimize_cache_object_cache_enable_container" class="wppepvn_toggle_show_hide_container">
+									
+									<?php if($isHasAPCStatus) : ?>
+									<div style="margin-left:5%; margin-bottom: 0px;">
+										<div class="checkbox" style="margin-bottom: 5px;">
+											<label>
+												<h4 style="margin: 0;">
+													<input type="checkbox" name="optimize_cache_object_cache_methods[apc]" value="apc" <?php 
+														echo (isset($bindPostData['optimize_cache_object_cache_methods']['apc']) ? ' checked ' : '');
+													?> />&nbsp;<?php $translate->e('Use APC'); ?>
+												</h4>
+											</label>
+										</div>
+										<p style="margin-left:25px;"><i></i></p>
+									</div>
+									<?php endif; ?>
+									
+									<?php if($isHasMemcacheStatus) : ?>
+									<div style="margin-left:5%; margin-bottom: 0px;">
+										<div class="checkbox" style="margin-bottom: 5px;">
+											<label>
+												<h4 style="margin: 0;">
+													<input type="checkbox" name="optimize_cache_object_cache_methods[memcache]" value="memcache" <?php 
+														echo (isset($bindPostData['optimize_cache_object_cache_methods']['memcache']) ? ' checked ' : '');
 													?> class="wppepvn_toggle_show_hide_trigger" data-target="#memcache-servers-button" />&nbsp;<?php $translate->e('Use Memcache'); ?>
 												</h4>
 											</label>
@@ -578,6 +641,54 @@
 				
 			</div><!-- #optimize-cdn -->
 			
+			<div role="tabpanel" class="tab-pane" id="optimize-others">
+				
+				<div style="padding-top: 2%; padding-bottom: 2%;">
+					
+					<h3 style="margin-bottom: 20px;">Others</h3>
+					
+					<div>
+					
+						<div class="" style="margin-bottom: 20px;">
+							<div class="checkbox">
+								<label>
+									<h4 style="margin: 0;">
+										<?php echo $form->render('learn_improve_google_pagespeed_enable'); ?>&nbsp;<?php $translate->e('Enable auto learn to improve Google PageSpeed Insights'); ?>
+									</h4>
+								</label>
+							</div>
+							<p style="margin-left:0px;margin-bottom:0;"><i><?php $translate->e('This feature will automatically learn to improve your website\'s Google PageSpeed Insight over time.'); ?></i></p>
+						</div>
+						
+						<div id="cdn_enable_container" class="wppepvn_toggle_show_hide_container">
+						
+							<div style="margin-left:5%; margin-bottom: 20px;">
+								<label>
+									<h4 style="margin: 0;">
+										<?php $translate->e('CNAME (CDN)'); ?> :
+									</h4>
+								</label>
+								<?php echo $form->render('cdn_domain'); ?>
+								<p style="margin-left:0px;margin-bottom:0;"><i></i></p>
+							</div>
+							
+							<div style="margin-left:5%; margin-bottom: 20px;">
+								<label>
+									<h4 style="margin: 0;">
+										<?php $translate->e('Exclude (Contained in url, separate them by comma)'); ?> :
+									</h4>
+								</label>
+								<?php echo $form->render('cdn_exclude_url'); ?>
+								<p style="margin-left:0px;margin-bottom:0;"><i><?php $translate->e('Plugin will ignore these urls.'); ?></i></p>
+							</div>
+							
+						</div>
+						
+					</div>
+					
+				</div>
+				
+			</div><!-- #optimize-others -->
 			
 			<div role="tabpanel" class="tab-pane" id="memcache-servers">
 				
@@ -599,7 +710,7 @@
 					
 				</div>
 				
-			</div><!-- #optimize-cdn -->
+			</div><!-- #memcache-servers -->
 			
 			
 		  </div>

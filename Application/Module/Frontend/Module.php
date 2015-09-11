@@ -21,10 +21,6 @@ class Module extends \WpPepVN\Mvc\Module
 		
         $this->di = $di;
 		
-		$cacheRequestUri = new CacheRequestUri($this->di);
-		
-		$this->di->set('cacheRequestUri',$cacheRequestUri,true);
-		
 		add_action( 'wp', array($this, 'add_action_wp'), WP_PEPVN_PRIORITY_LAST );
 		
 	}
@@ -33,8 +29,10 @@ class Module extends \WpPepVN\Mvc\Module
 	public function add_action_wp()
 	{
 		
-		$optimizeSpeed = $this->di->getShared('optimizeSpeed');
+		$wpRegisterStyleScript = $this->di->getShared('wpRegisterStyleScript');
+		$wpRegisterStyleScript->frontend_enqueue_scripts();
 		
+		$optimizeSpeed = $this->di->getShared('optimizeSpeed');
 		$optimizeSpeed->initFrontend();
 		
 	}

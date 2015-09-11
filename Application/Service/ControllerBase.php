@@ -29,6 +29,6 @@ class ControllerBase extends MvcController
 	protected function _doAfterUpdateOptions() 
     {
 		$cacheManager = $this->di->getShared('cacheManager');
-		$cacheManager->clean_cache();
+		$cacheManager->registerCleanCache();
 	}
 }

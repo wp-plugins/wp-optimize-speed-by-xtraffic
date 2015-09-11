@@ -52,6 +52,7 @@ class OptimizeSpeedOptionsForm extends FormForm
 			,'optimize_cache_feed_page_cache_enable' => ''
 			,'optimize_cache_browser_cache_enable' => ''
 			,'optimize_cache_database_cache_enable' => ''
+			,'optimize_cache_object_cache_enable' => ''
 			,'optimize_cache_ssl_request_cache_enable' => ''
 			,'optimize_cache_mobile_device_cache_enable' => ''
 			,'optimize_cache_url_get_query_cache_enable' => ''
@@ -80,6 +81,9 @@ class OptimizeSpeedOptionsForm extends FormForm
 			,'optimize_html_minify_html_enable' => ''
 			
 			,'cdn_enable' => ''
+			
+			,'learn_improve_google_pagespeed_enable' => ''
+			,'image_lazyload_enable' => ''
 		);
 		
 		foreach($arrFields as $key => $value) {
@@ -100,6 +104,9 @@ class OptimizeSpeedOptionsForm extends FormForm
 				} else if('optimize_cache_database_cache_enable' === $nameElement) {
 					$inputElement->setAttribute('class','wppepvn_toggle_show_hide_trigger');
 					$inputElement->setAttribute('data-target','#optimize_cache_database_cache_enable_container');
+				} else if('optimize_cache_object_cache_enable' === $nameElement) {
+					$inputElement->setAttribute('class','wppepvn_toggle_show_hide_trigger');
+					$inputElement->setAttribute('data-target','#optimize_cache_object_cache_enable_container');
 				} else if('optimize_cache_prebuild_cache_enable' === $nameElement) {
 					$inputElement->setAttribute('class','wppepvn_toggle_show_hide_trigger');
 					$inputElement->setAttribute('data-target','#optimize_cache_prebuild_cache_enable_container');
@@ -116,7 +123,6 @@ class OptimizeSpeedOptionsForm extends FormForm
 					$inputElement->setAttribute('class','wppepvn_toggle_show_hide_trigger');
 					$inputElement->setAttribute('data-target','#cdn_enable_container');
 				}
-				
 				
 				$arrayFilters = array('striptags','trim','string');
 				foreach($arrayFilters as $filerName) {

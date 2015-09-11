@@ -98,6 +98,11 @@ class OptimizeSpeedController extends ControllerBase
 						$optionsData['optimize_cache_database_cache_methods'] = $allPostData['optimize_cache_database_cache_methods'];
 					}
 					
+					if(isset($allPostData['optimize_cache_object_cache_methods']) && $allPostData['optimize_cache_object_cache_methods']) {
+						$allPostData['optimize_cache_object_cache_methods'] = (array)$allPostData['optimize_cache_object_cache_methods'];
+						$optionsData['optimize_cache_object_cache_methods'] = $allPostData['optimize_cache_object_cache_methods'];
+					}
+					
 					$tmp = (array)$optionsData['cdn_domain'];
 					$tmp = implode(';',$tmp);
 					$tmp = preg_replace('#[\,\;]+#',';',$tmp);

@@ -6,6 +6,7 @@ use WpPepVN\Utils
 	, WPOptimizeSpeedByxTraffic\Application\Service\CacheRequestUri
 	, WPOptimizeSpeedByxTraffic\Application\Service\OptimizeSpeed
 	, WPOptimizeSpeedByxTraffic\Application\Service\OptimizeSpeed\OptimizeCache\Database as OptimizeCacheDatabase
+	, WPOptimizeSpeedByxTraffic\Application\Service\OptimizeSpeed\OptimizeCache\ObjectCache as OptimizeCacheObjectCache
 	, WPOptimizeByxTraffic\Application\Service\StaticVar as ServiceStaticVar
 	, WPOptimizeByxTraffic\Application\Service\PepVN_Data
 ;
@@ -26,6 +27,9 @@ class OptimizeCache
 		
 		$optimizeCacheDatabase = new OptimizeCacheDatabase($this->di);
 		$optimizeCacheDatabase->init(OptimizeSpeed::getOption());
+		
+		$optimizeCacheObjectCache = new OptimizeCacheObjectCache($this->di);
+		$optimizeCacheObjectCache->init(OptimizeSpeed::getOption());
 		
 		$tmp = array();
 		$tmp['group_urls_prebuild_cache'] = array();

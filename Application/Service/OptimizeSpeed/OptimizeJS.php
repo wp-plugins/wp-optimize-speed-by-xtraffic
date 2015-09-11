@@ -24,7 +24,7 @@ class OptimizeJS
 		,'stats.wp.com'
 	);
 	
-	private $_patternsIgnoredJavascript_Code = '#(document\.write|_ase\.push|st_go)#is';
+	private $_patternsIgnoredJavascript_Code = '#(document\.write|_ase\.push|st_go|_stq\.)#is';
 	
 	private $_patternsJavascriptNotAsync_Code = '#(document\.write|_ase\.push|st_go|adsbygoogle)#is';
 	
@@ -387,6 +387,16 @@ class OptimizeJS
 		if(isset($options['optimize_javascript_asynchronous_javascript_loading_enable']) && ('on' === $options['optimize_javascript_asynchronous_javascript_loading_enable'])) {
 			$isAsynchronousJavascriptLoadingStatus = true;
 		}
+		
+		$patternsEscaped = array();
+		
+		$rsOne = PepVN_Data::escapeHtmlTagsAndContents($text,'iframe');
+		
+		$text = $rsOne['content'];
+		if(!empty($rsOne['patterns'])) {
+			$patternsEscaped = array_merge($patternsEscaped, $rsOne['patterns']);
+		}
+		unset($rsOne);
 		
 		$rsGetAllJavascripts = $this->get_all_javascripts($text);
 		
@@ -827,6 +837,11 @@ class OptimizeJS
 		if($textAppendToBody) {
 			$text = PepVN_Data::appendTextToTagBodyOfHtml($textAppendToBody,$text);
 		}
+		
+		if(!empty($patternsEscaped)) {
+			$text = str_replace(array_values($patternsEscaped),array_keys($patternsEscaped),$text); 
+		}
+		unset($patternsEscaped);
 		
 		PepVN_Data::$cacheObject->set_cache($keyCache, $text);
 		

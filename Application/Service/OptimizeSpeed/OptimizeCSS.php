@@ -7,6 +7,7 @@ use WpPepVN\Utils
 	, WPOptimizeByxTraffic\Application\Service\PepVN_Data
 	, WpPepVN\System
 	, WPOptimizeByxTraffic\Application\Service\CSSFixer
+	, WPOptimizeByxTraffic\Application\Service\TempDataAndCacheFile
 ;
 
 class OptimizeCSS
@@ -37,55 +38,51 @@ class OptimizeCSS
 	
 	public function get_all_css($text) 
 	{
+	
+		$resultData = array();
 		
-		$keyCache = Utils::hashKey(array(
-			__METHOD__
-			, $text
-		));
+		preg_match_all('#((<(link)[^><]*/?>.*?(</link>)?)|(<(style)[^><]*>.*?</style>))#is',$text,$matched1);
 		
-		$resultData = PepVN_Data::$cacheObject->get_cache($keyCache);
-		
-		if(null === $resultData) {
-			
-			$resultData = array();
-			
-			preg_match_all('#((<(link)[^><]*/?>.*?(</link>)?)|(<(style)[^><]*>.*?</style>))#is',$text,$matched1);
-			
-			if(isset($matched1[0]) && !PepVN_Data::isEmptyArray($matched1[0])) {
-				$matched1 = $matched1[0];
-				foreach($matched1 as $key1 => $value1) {
-					unset($matched1[$key1]);
+		if(isset($matched1[0]) && !PepVN_Data::isEmptyArray($matched1[0])) {
+			$matched1 = $matched1[0];
+			foreach($matched1 as $key1 => $value1) {
+				unset($matched1[$key1]);
+				
+				if($value1) {
 					
-					if($value1) {
-						
-						if(preg_match('#<link[^><]*/?>.*(</link>)?#is',$value1)) {//is link css
-							if(preg_match('#type=(\'|")text/css\1#i',$value1)) {
-								$resultData[] = $value1;
-								/*
-								//if(!preg_match('#<link[^><]*xtraffic-exclude[^><]* /?>.*(</link>)?#is',$value1)) {
-									$resultData[] = $value1;
-								}
-								*/
-							}
-						} else {//preg_match('#<(style)[^><]*>.*?</\1>#is',$text,$matched1);
+					if(preg_match('#<link[^><]*/?>.*(</link>)?#is',$value1)) {//is link css
+						if(preg_match('#type=(\'|")text/css\1#i',$value1)) {
 							$resultData[] = $value1;
 							/*
-							if(!preg_match('#<(style)[^><]*xtraffic-exclude[^><]* /?>.*?(</style>)?#is',$value1)) {
+							//if(!preg_match('#<link[^><]*xtraffic-exclude[^><]* /?>.*(</link>)?#is',$value1)) {
 								$resultData[] = $value1;
+							}
+							
+							if($hook->has_action('after_get_css_item')) {
+								$hook->do_action('after_get_css_item', $value1);
 							}
 							*/
 						}
+					} else {//preg_match('#<(style)[^><]*>.*?</\1>#is',$text,$matched1);
+						$resultData[] = $value1;
+						/*
+						if(!preg_match('#<(style)[^><]*xtraffic-exclude[^><]* /?>.*?(</style>)?#is',$value1)) {
+							$resultData[] = $value1;
+						}
+						
+						if($hook->has_action('after_get_css_item')) {
+							$hook->do_action('after_get_css_item', $value1);
+						}
+						*/
+						
 					}
-					
-					unset($value1);
 				}
+				
+				unset($value1);
 			}
-			
-			unset($matched1);
-			
-			PepVN_Data::$cacheObject->set_cache($keyCache, $resultData);
-			
 		}
+		
+		unset($matched1);
 		
 		return $resultData;
 	}
@@ -148,7 +145,7 @@ class OptimizeCSS
 		return $resultData;
 	}
 	
-	private function _process_each_item($value1, $options)
+	public function process_each_item($value1, $options)
 	{
 		$resultData = array(
 			'data_processed' => false
@@ -289,7 +286,7 @@ class OptimizeCSS
 						
 						unset($rsGetAllCSS[$key1]);
 						
-						$rsTwo = $this->_process_each_item($value1, $options);
+						$rsTwo = $this->process_each_item($value1, $options);
 						
 						if(
 							isset($rsTwo['data_processed'])
@@ -423,6 +420,16 @@ class OptimizeCSS
 		if(isset($options['optimize_css_exclude_external_css_enable']) && ('on' === $options['optimize_css_exclude_external_css_enable'])) {
 			$isExcludeExternalCSSStatus = true;
 		}
+		
+		$patternsEscaped = array();
+		
+		$rsOne = PepVN_Data::escapeHtmlTagsAndContents($text,'iframe');
+		
+		$text = $rsOne['content'];
+		if(!empty($rsOne['patterns'])) {
+			$patternsEscaped = array_merge($patternsEscaped, $rsOne['patterns']);
+		}
+		unset($rsOne);
 		
 		$rsGetAllCss = $this->get_all_css($text);
 		
@@ -687,7 +694,7 @@ class OptimizeCSS
 									
 									if(false !== file_put_contents($fileStorePath,'')) {
 										
-										$rsTwo = $this->_process_each_item($value1, $options);
+										$rsTwo = $this->process_each_item($value1, $options);
 										
 										if(
 											isset($rsTwo['data_processed'])
@@ -721,7 +728,7 @@ class OptimizeCSS
 								
 							} else if(isset($value1['code'])) {
 								
-								$rsTwo = $this->_process_each_item($value1, $options);
+								$rsTwo = $this->process_each_item($value1, $options);
 								
 								if(
 									isset($rsTwo['data_processed'])
@@ -839,6 +846,11 @@ class OptimizeCSS
 			$text = PepVN_Data::appendTextToTagBodyOfHtml($textAppendToBody,$text);
 		}
 		unset($textAppendToBody);
+		
+		if(!empty($patternsEscaped)) {
+			$text = str_replace(array_values($patternsEscaped),array_keys($patternsEscaped),$text); 
+		}
+		unset($patternsEscaped);
 		
 		PepVN_Data::$cacheObject->set_cache($keyCache, $text);
 		

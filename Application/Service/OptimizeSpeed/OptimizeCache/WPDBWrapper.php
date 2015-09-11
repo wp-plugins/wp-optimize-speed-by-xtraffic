@@ -48,75 +48,88 @@ class WPDBWrapper
 				}
 			}
 			
-			if(!isset(self::$_wppepvn_tempData['_patternsMethodsNotCache1'])) {
-				$tmp = array(
-					'insert'
-					,'replace'
-					,'update'
-					,'delete'
-					,'get_results'
-					,'query'
-					,'get_row'
-					,'get_col'
-					,'get_var'
-					
-					
-					//,'prepare'
-					//,'get_row'
-					//,'get_col'
-					//,'get_var'
-				);
-				
-				self::$_wppepvn_tempData['_patternsMethodsNotCache1'] = '#^('.implode('|',$tmp).').*?#s';
+			if($isCachableStatus) {
+				if(
+					$this->_wppepvn_wpExtend->is_admin()
+					|| $this->_wppepvn_wpExtend->isLoginPage()
+				) {	//not cache admin page
+					$isCachableStatus = false;
+				}
 			}
 			
-			if(preg_match(self::$_wppepvn_tempData['_patternsMethodsNotCache1'],$method)) {
-				$isCachableStatus = false;
-			} else if(!preg_match('#^get_.+#s',$method)) {
-				$isCachableStatus = false;
+			if($isCachableStatus) {
 				
-				if(!isset(self::$_wppepvn_tempData['_patternsMethodsNotCache2'])) {
+				if(!isset(self::$_wppepvn_tempData['_patternsMethodsNotCache1'])) {
 					$tmp = array(
-						'bail'
-						,'check_connection'
-						,'db_connect'
-						,'flush'
-						,'get_caller'
-						,'hide_errors'
-						,'init_charset'
-						,'print_error'
+						'insert'
 						,'replace'
-						,'select'
-						,'set_blog_id'
-						,'set_charset'
-						,'set_prefix'
-						,'set_sql_mode'
-						,'show_errors'
-						,'suppress_errors'
-						,'timer_start'
-						,'timer_stop'
+						,'update'
+						,'delete'
+						,'get_results'
+						,'query'
+						,'get_row'
+						,'get_col'
+						,'get_var'
+						
+						
+						//,'prepare'
+						//,'get_row'
+						//,'get_col'
+						//,'get_var'
 					);
 					
-					self::$_wppepvn_tempData['_patternsMethodsNotCache2'] = '#^('.implode('|',$tmp).')#';
+					self::$_wppepvn_tempData['_patternsMethodsNotCache1'] = '#^('.implode('|',$tmp).').*?#s';
 				}
 				
-				if(!preg_match(self::$_wppepvn_tempData['_patternsMethodsNotCache2'],$method)) {
-					if(isset($args[0]) && $args[0] && is_string($args[0])) {
-						if(preg_match('#^([\s \t\(])*?SELECT[\s \t]+#is',$args[0])) {
-							if(!preg_match('#(FOUND_ROWS)#is',$args[0])) {
-								$isCachableStatus = true; 
+				if(preg_match(self::$_wppepvn_tempData['_patternsMethodsNotCache1'],$method)) {
+					$isCachableStatus = false;
+				} else if(!preg_match('#^get_.+#s',$method)) {
+					$isCachableStatus = false;
+					
+					if(!isset(self::$_wppepvn_tempData['_patternsMethodsNotCache2'])) {
+						$tmp = array(
+							'bail'
+							,'check_connection'
+							,'db_connect'
+							,'flush'
+							,'get_caller'
+							,'hide_errors'
+							,'init_charset'
+							,'print_error'
+							,'replace'
+							,'select'
+							,'set_blog_id'
+							,'set_charset'
+							,'set_prefix'
+							,'set_sql_mode'
+							,'show_errors'
+							,'suppress_errors'
+							,'timer_start'
+							,'timer_stop'
+						);
+						
+						self::$_wppepvn_tempData['_patternsMethodsNotCache2'] = '#^('.implode('|',$tmp).')#';
+					}
+					
+					if(!preg_match(self::$_wppepvn_tempData['_patternsMethodsNotCache2'],$method)) {
+						if(isset($args[0]) && $args[0] && is_string($args[0])) {
+							if(preg_match('#^([\s \t\(])*?SELECT[\s \t]+#is',$args[0])) {
+								if(!preg_match('#(FOUND_ROWS)#is',$args[0])) {
+									$isCachableStatus = true; 
+								}
 							}
+						}
+					}
+					
+				} else {
+					if(isset($args[0]) && $args[0]) {
+						$args[0] = (string)$args[0];
+						if(preg_match('#.*?(FOUND_ROWS).*?#is',$args[0])) {
+							$isCachableStatus = false;
 						}
 					}
 				}
 				
-			} else {
-				if(isset($args[0]) && $args[0]) {
-					$args[0] = (string)$args[0];
-					if(preg_match('#.*?(FOUND_ROWS).*?#is',$args[0])) {
-						$isCachableStatus = false;
-					}
-				}
 			}
 			
 			self::$_wppepvn_tempData[$key_check] = $isCachableStatus;

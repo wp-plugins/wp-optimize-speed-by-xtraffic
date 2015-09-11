@@ -1,8 +1,11 @@
 <?php 
 
 use WPOptimizeSpeedByxTraffic\Application\Service\CacheRequestUri
+	, WPOptimizeSpeedByxTraffic\Application\Service\WpRegisterStyleScript
 	, WPOptimizeSpeedByxTraffic\Application\Service\OptimizeSpeed
 	, WPOptimizeSpeedByxTraffic\Application\Service\OptimizeSpeed\OptimizeCDN
+	, WPOptimizeSpeedByxTraffic\Application\Service\OptimizeSpeed\OptimizeCSS
+	, WPOptimizeSpeedByxTraffic\Application\Service\OptimizeSpeed\OptimizeGooglePageSpeed
 ;
 
 $tmp = array(
@@ -12,6 +15,7 @@ $tmp = array(
 	,'device'
 	,'cacheManager'
 	,'session'
+	,'queue'
 );
 
 $tmp = array_unique($tmp);
@@ -28,5 +32,14 @@ $di->set('optimizeSpeed', $optimizeSpeed, true);
 $optimizeCDN = new OptimizeCDN($di);
 $di->set('optimizeCDN', $optimizeCDN, true);
 
+$optimizeCSS = new OptimizeCSS($di);
+$di->set('optimizeCSS', $optimizeCSS, true);
+
 $cacheRequestUri = new CacheRequestUri($di);
 $di->set('cacheRequestUri', $cacheRequestUri, true);
+
+$optimizeGooglePageSpeed = new OptimizeGooglePageSpeed($di);
+$di->set('optimizeGooglePageSpeed', $optimizeGooglePageSpeed, true);
+
+$wpRegisterStyleScript = new WpRegisterStyleScript();
+$di->set('wpRegisterStyleScript', $wpRegisterStyleScript, true);
