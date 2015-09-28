@@ -4,7 +4,7 @@ Donate link: http://blog-xtraffic.pep.vn/
 Tags: optimize, cache, javascript, css, stylesheet, style, minify, combine, speed, performance, optimization, performance, render-blocking, speed, yslow, google, pagespeed, google pagespeed, google pagespeed insights, gtmetrix
 Requires at least: 3.0.1
 Tested up to: 4.2.4
-Stable tag: 5.1.0
+Stable tag: 1.1.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,12 @@ To install the plugin "***WP Optimize Speed By xTraffic***" and get it working :
 3. Result Google PageSpeed Insights Desktop Score 100/100 after optimize with "WP Optimize Speed By xTraffic" plugin
 
 == Changelog ==
+
+= 1.1.2 =
+* Fix issue CDN
+
+= 1.1.1 =
+* Fix some issue
 
 = 1.1.0 =
 * Improve Optimize Javascript & Optimize CSS

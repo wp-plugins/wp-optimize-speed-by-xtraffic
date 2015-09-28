@@ -49,6 +49,9 @@ class OptimizeSpeed
 		
 		$hook->add_action('cronjob', array($this->_optimizeCache,'prebuild_urls_cache'), WP_PEPVN_PRIORITY_LAST);
 		
+		$hook->add_action('clean_cache_all', array($this,'action_clean_cache_all'), WP_PEPVN_PRIORITY_LAST);
+		
+		
 	}
     
 	public function initFrontend() 
@@ -270,6 +273,12 @@ class OptimizeSpeed
 		
 		return $excludeUrls;
 		
+	}
+	
+	public function action_clean_cache_all() 
+	{
+		$tmp = WP_CONTENT_PEPVN_DIR . 'cache' . DIRECTORY_SEPARATOR . 'static-files' . DIRECTORY_SEPARATOR;
+		System::rmdirR($tmp);
 	}
 	
 	public function getPatternsExcludeCacheCookies($excludeCookies = array(), $options = false) 
@@ -925,7 +934,8 @@ server_tokens off;
 
 gzip on;
 gzip_comp_level 2;
-gzip_min_length 1440;
+#gzip_min_length 1440;
+gzip_min_length 256;
 gzip_buffers 16 8k;
 gzip_types '.implode(' ',$mimeTypesEnableGzip).';
 gzip_vary on;
@@ -1531,6 +1541,10 @@ if(typeof('.$keyStoreJs.') === "undefined") { '.$keyStoreJs.' = new Array(); }
 		
 		$wpExtend = $this->di->getShared('wpExtend');
 		
+		$preResolveDns = $this->di->getShared('preResolveDns');
+		
+		$preResolveDns->statisticsDomains($buffer,'html');
+		
 		$pluginPromotionInfo = $wpExtend->getWpOptimizeByxTrafficPluginPromotionInfo();
 		
 		$buffer = preg_replace('#<!--[^>]+'.preg_quote($pluginPromotionInfo['data']['plugin_wp_url'],'#').'[^>]+-->#is','',$buffer);
@@ -1538,6 +1552,8 @@ if(typeof('.$keyStoreJs.') === "undefined") { '.$keyStoreJs.' = new Array(); }
 		$options = self::getOption();
 		
 		$buffer = $this->_process_html($buffer,$options);
+		
+		$buffer = $preResolveDns->appendDNSPrefetch($buffer);
 		
 		$buffer = PepVN_Data::appendTextToTagBodyOfHtml($pluginPromotionInfo['html_comment_text'],$buffer);
 		

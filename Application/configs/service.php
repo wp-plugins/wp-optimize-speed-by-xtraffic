@@ -6,6 +6,8 @@ use WPOptimizeSpeedByxTraffic\Application\Service\CacheRequestUri
 	, WPOptimizeSpeedByxTraffic\Application\Service\OptimizeSpeed\OptimizeCDN
 	, WPOptimizeSpeedByxTraffic\Application\Service\OptimizeSpeed\OptimizeCSS
 	, WPOptimizeSpeedByxTraffic\Application\Service\OptimizeSpeed\OptimizeGooglePageSpeed
+	, WPOptimizeSpeedByxTraffic\Application\Service\OptimizeSpeed\PreResolveDns
+	
 ;
 
 $tmp = array(
@@ -40,6 +42,9 @@ $di->set('cacheRequestUri', $cacheRequestUri, true);
 
 $optimizeGooglePageSpeed = new OptimizeGooglePageSpeed($di);
 $di->set('optimizeGooglePageSpeed', $optimizeGooglePageSpeed, true);
+
+$preResolveDns = new PreResolveDns($di);
+$di->set('preResolveDns', $preResolveDns, true);
 
 $wpRegisterStyleScript = new WpRegisterStyleScript();
 $di->set('wpRegisterStyleScript', $wpRegisterStyleScript, true);

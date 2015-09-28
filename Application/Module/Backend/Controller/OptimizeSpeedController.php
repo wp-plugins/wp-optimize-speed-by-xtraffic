@@ -34,8 +34,6 @@ class OptimizeSpeedController extends ControllerBase
 		
 		$translate = $this->view->translate;
 		
-		
-		
 		$adminNotice->add_notice(
 			'<p>'.$translate->_('Although we have tried and optimal features "Optimize Javascript" & "Optimize CSS" operate effectively on many websites, they make your website load faster and have higher scores on the measure tools.').'</p>'
 			. '<p>'.$translate->_('But there are some exceptions make website\'s layout is broken or not running properly like before. If your website is in the unfortunate case, you just simply turn off only 2 features "Optimize Javascript" & "Optimize CSS" and experience other features, because they operate independently of each other.').'</p>'

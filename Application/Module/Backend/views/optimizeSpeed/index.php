@@ -198,7 +198,7 @@
 							</div>
 							
 							
-							<div style="margin-left:5%; margin-bottom: 20px; display:none;">
+							<div style="margin-left:5%; margin-bottom: 20px;<?php echo (WP_PEPVN_DEBUG ? '' : 'display:none;'); ?>">
 								<div class="checkbox" style="margin-bottom: 5px;">
 									<label>
 										<h4 style="margin: 0;">
@@ -658,30 +658,6 @@
 								</label>
 							</div>
 							<p style="margin-left:0px;margin-bottom:0;"><i><?php $translate->e('This feature will automatically learn to improve your website\'s Google PageSpeed Insight over time.'); ?></i></p>
-						</div>
-						
-						<div id="cdn_enable_container" class="wppepvn_toggle_show_hide_container">
-						
-							<div style="margin-left:5%; margin-bottom: 20px;">
-								<label>
-									<h4 style="margin: 0;">
-										<?php $translate->e('CNAME (CDN)'); ?> :
-									</h4>
-								</label>
-								<?php echo $form->render('cdn_domain'); ?>
-								<p style="margin-left:0px;margin-bottom:0;"><i></i></p>
-							</div>
-							
-							<div style="margin-left:5%; margin-bottom: 20px;">
-								<label>
-									<h4 style="margin: 0;">
-										<?php $translate->e('Exclude (Contained in url, separate them by comma)'); ?> :
-									</h4>
-								</label>
-								<?php echo $form->render('cdn_exclude_url'); ?>
-								<p style="margin-left:0px;margin-bottom:0;"><i><?php $translate->e('Plugin will ignore these urls.'); ?></i></p>
-							</div>
-							
 						</div>
 						
 					</div>

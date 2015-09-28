@@ -251,9 +251,9 @@ class OptimizeCDN
 		$currentProtocol = '';
 		
 		if($scheme) {
-			if(0 === strpos('https', $scheme)) {
+			if(0 === strpos($scheme, 'https')) {
 				$currentProtocol = 'https://';
-			} else if(0 === strpos('http', $scheme)) {
+			} else if(0 === strpos($scheme,'http')) {
 				$currentProtocol = 'http://';
 			}
 		}
