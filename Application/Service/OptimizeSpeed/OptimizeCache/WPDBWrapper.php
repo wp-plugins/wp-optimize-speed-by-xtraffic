@@ -132,6 +132,15 @@ class WPDBWrapper
 				
 			}
 			
+			
+			if($isCachableStatus) {
+				if(isset($args[0]) && $args[0] && is_string($args[0])) {
+					if(preg_match('#(\'|\")cron(\'|\")#is',$args[0])) {	//not cache cron options
+						$isCachableStatus = false;
+					}
+				}
+			}
+			
 			self::$_wppepvn_tempData[$key_check] = $isCachableStatus;
 		}
 		

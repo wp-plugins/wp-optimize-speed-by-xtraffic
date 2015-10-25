@@ -25,6 +25,7 @@ Everything is done completely automatically, and you can change the options from
 * ***Optimize Speed*** : make page speed load amazingly fast by these features "Optimize Javascript + Optimize CSS (Style) + Optimize HTML"
   * Optimize Cache : Make your WordPress website load faster from 80% or more. Prebuild cache the most visited pages. This feature compatible with WooCommerce.
     * Database Cache : Support Multi-Cache : APC + Memcache + File.
+	* Object Cache : Support Multi-Cache : APC + Memcache + File.
   * Optimize Javascript :
     * Combine Javascript.
     * Minify Javascript.
@@ -65,8 +66,13 @@ To install the plugin "***WP Optimize Speed By xTraffic***" and get it working :
 
 == Changelog ==
 
+= 1.1.3 =
+* Add object cache
+* Fix issue login page
+* Fix minify javascript
+
 = 1.1.2 =
-* Fix issue CDN
+* Fix CDN issue
 
 = 1.1.1 =
 * Fix some issue

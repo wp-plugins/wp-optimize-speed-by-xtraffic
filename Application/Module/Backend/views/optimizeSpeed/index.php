@@ -198,7 +198,7 @@
 							</div>
 							
 							
-							<div style="margin-left:5%; margin-bottom: 20px;<?php echo (WP_PEPVN_DEBUG ? '' : 'display:none;'); ?>">
+							<div style="margin-left:5%; margin-bottom: 20px;<?php //echo (WP_PEPVN_DEBUG ? '' : 'display:none;'); ?>">
 								<div class="checkbox" style="margin-bottom: 5px;">
 									<label>
 										<h4 style="margin: 0;">

@@ -39,6 +39,9 @@ class OptimizeCache
 		
 		$hook->add_action('clean_cache',array($this, 'on_clean_cache_action'));
 		
+		$hook->add_action('cronjob', array($this,'prebuild_urls_cache'), WP_PEPVN_PRIORITY_LAST);
+		
+		
 	}
 	
     public function setStatisticAccess($statisticAccess)
@@ -47,6 +50,11 @@ class OptimizeCache
 	}
 	
 	public function initFrontend()
+	{
+		
+	}
+	
+	public function initBackend()
 	{
 		
 	}

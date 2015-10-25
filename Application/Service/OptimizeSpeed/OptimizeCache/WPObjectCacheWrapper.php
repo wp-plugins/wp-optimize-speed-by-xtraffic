@@ -212,8 +212,10 @@ class WPObjectCacheWrapper
 			,'wppepvn-global'
 		));
 		
+		//Groups can cache
 		$this->global_groups = array_unique($this->global_groups);
 		
+		//Groups not cache
 		$this->_wppepvn_add_nonpersistent_groups(array(
 			'comment'
 			,'counts'

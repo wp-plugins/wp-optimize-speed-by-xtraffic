@@ -239,26 +239,35 @@ class CacheRequestUri
 	
 	public function set_cache_for_web_server($data, $configs = null) 
 	{
-		$options = OptimizeSpeed::getOption();
-		
-		$isCreateCacheStatus = $this->isRequestCacheable($options);
-		
-		if(true === $isCreateCacheStatus) {
-			$cacheFilePath = $this->get_cache_file_path(null, $options);
+		if($data && is_string($data) && !empty($data)) {
 			
-			if($cacheFilePath) {
+			$data = trim($data);
+			
+			if($data && !empty($data)) {
 				
-				if(is_file($cacheFilePath)) {
-					if(isset($configs['force_override']) && $configs['force_override']) {
-						
-					} else {
-						$isCreateCacheStatus = false;
-					}
-				}
+				$options = OptimizeSpeed::getOption();
 				
-				if($isCreateCacheStatus) {
+				$isCreateCacheStatus = $this->isRequestCacheable($options);
+				
+				if(true === $isCreateCacheStatus) {
 					
-					return file_put_contents($cacheFilePath, $data);
+					$cacheFilePath = $this->get_cache_file_path(null, $options);
+					
+					if($cacheFilePath) {
+						
+						if(is_file($cacheFilePath)) {
+							if(isset($configs['force_override']) && $configs['force_override']) {
+								
+							} else {
+								$isCreateCacheStatus = false;
+							}
+						}
+						
+						if($isCreateCacheStatus) {
+							return file_put_contents($cacheFilePath, $data);
+						}
+						
+					}
 				}
 				
 			}

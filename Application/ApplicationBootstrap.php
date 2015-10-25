@@ -86,7 +86,7 @@ class ApplicationBootstrap extends Bootstrap
 					'name' => 'WP Optimize By xTraffic'
 					, 'slug' => 'wp-optimize-by-xtraffic'
 					, 'wp_plugin_url' => 'https://wordpress.org/plugins/wp-optimize-by-xtraffic/'
-					, 'version' => '>=5.1.3'
+					, 'version' => '>=5.1.4'
 					, 'check' => array(
 						'variable_name' => 'wpOptimizeByxTraffic'
 						,'constant_version_name' => 'WP_OPTIMIZE_BY_XTRAFFIC_PLUGIN_VERSION'
