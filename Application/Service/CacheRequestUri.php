@@ -164,8 +164,8 @@ class CacheRequestUri
 		
 		if($isCreateCacheStatus) {
 			
-			$device = $this->di->getShared('device');
-			$request = $this->di->getShared('request');
+			//$device = $this->di->getShared('device');
+			//$request = $this->di->getShared('request');
 			$wpExtend = $this->di->getShared('wpExtend');
 			
 			if($wpExtend->is_user_logged_in()) {

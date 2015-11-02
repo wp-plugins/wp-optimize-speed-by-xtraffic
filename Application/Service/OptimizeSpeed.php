@@ -279,8 +279,8 @@ class OptimizeSpeed
 	
 	public function action_clean_cache_all() 
 	{
-		$tmp = WP_CONTENT_PEPVN_DIR . 'cache' . DIRECTORY_SEPARATOR . 'static-files' . DIRECTORY_SEPARATOR;
-		System::rmdirR($tmp);
+		//$tmp = WP_CONTENT_PEPVN_DIR . 'cache' . DIRECTORY_SEPARATOR . 'static-files' . DIRECTORY_SEPARATOR;
+		//System::rmdirR($tmp);
 	}
 	
 	public function getPatternsExcludeCacheCookies($excludeCookies = array(), $options = false) 
@@ -1367,6 +1367,10 @@ if(typeof('.$keyStoreJs.') === "undefined") { '.$keyStoreJs.' = new Array(); }
 					echo $rsCache['text'];
 				}
 				*/
+				
+				if(isset($rsCache['text']) && $rsCache['text']) {
+					$this->_optimizeCache->set_cache_for_web_server($rsCache['text']);
+				}
 				
 				echo $rsCache['text'];
 				
